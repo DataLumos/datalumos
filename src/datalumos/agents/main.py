@@ -25,7 +25,7 @@ logger = logging.getLogger("datalumos")
 @dataclass
 class Config:
     """Minimal configuration for Data Lumos"""
-    postgres_config: object = DEFAULT_POSTGRES_CONFIG
+    postgres_config: object
     openai_key: str | None = None
 
     @classmethod

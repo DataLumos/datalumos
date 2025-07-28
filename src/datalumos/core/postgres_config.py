@@ -16,15 +16,15 @@ class PostgreSQLConfig:
     schema: str = "public"
 
     @classmethod
-    def from_env(cls, prefix: str = "POSTGRES") -> "PostgreSQLConfig":
+    def from_env(cls) -> "PostgreSQLConfig":
         """Create configuration from environment variables with fallback to defaults."""
         return cls(
-            host=os.getenv(f"{prefix}_HOST", os.getenv("DL_DB_HOST", "localhost")),
-            port=int(os.getenv(f"{prefix}_PORT", os.getenv("DL_DB_PORT", "5432"))),
-            database=os.getenv(f"{prefix}_DB", os.getenv("DL_DB_NAME", "datalumos")),
-            username=os.getenv(f"{prefix}_USER", os.getenv("DL_DB_USER", "datalumos")),
-            password=os.getenv(f"{prefix}_PASSWORD", os.getenv("DL_DB_PASSWORD", "datalumos123")),
-            schema=os.getenv(f"{prefix}_SCHEMA", "public")
+            host=os.getenv("DL_DB_HOST", "localhost"),
+            port=int(os.getenv("DL_DB_PORT", "5432")),
+            database=os.getenv("DL_DB_NAME", "datalumos"),
+            username=os.getenv("DL_DB_USER", "datalumos"),
+            password=os.getenv("DL_DB_PASSWORD", "datalumos123"),
+            schema=os.getenv("DL_DB_SCHEMA", "public")
         )
 
     @property
