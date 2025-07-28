@@ -1,0 +1,8 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.5  # Update to the latest stable release
+    hooks:
+      - id: ruff-check
+        args: [--extend-select=SIM,RUF,TID]
+      - id: ruff-format
+        args: [--fix]
