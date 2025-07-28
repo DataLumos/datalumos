@@ -1,0 +1,87 @@
+[project]
+name = "datalumos"
+version = "0.1.0"
+description = "An agentic system for data QA"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    {name = "Petra", email = "your.email@example.com"},
+]
+keywords = ["mcp", "postgresql", "llm", "openai", "agentic"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "anthropic>=0.21.0",
+    "langchain>=0.3.21",
+    "langchain-anthropic>=0.3.10",
+    "langchain-mcp-adapters>=0.0.5",
+    "langgraph>=0.3.13",
+    "mcp>=1.4.1",
+    "pydantic-settings>=2.8.1",
+    "langchain-openai>=0.3.13",
+    "langchain-core>=0.3.21",
+    "pandas>=2.2.3",
+    "sqlalchemy>=2.0.39",
+    "psycopg2-binary>=2.9.10",
+    "openai-agents>=0.1.0",
+    "jupyter>=1.1.1",
+    "dlt[postgres]>=1.14.0",
+    "dlt>=1.14.0",
+    "dlt[duckdb]>=1.14.0",
+    "rich>=13.9.5",
+    "typer>=0.16.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=22.0",
+    "isort>=5.0",
+    "mypy>=1.0",
+    "ruff>=0.1.0",
+    "jupyter>=1.1.1",
+]
+env = [
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/dataqa"
+Repository = "https://github.com/yourusername/dataqa"
+Documentation = "https://github.com/yourusername/dataqa#readme"
+Issues = "https://github.com/yourusername/dataqa/issues"
+
+[project.scripts]
+datalumos-ingest = "datalumos.connectors.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = ["E", "F", "I", "N", "W", "B", "C4", "UP"]
+ignore = ["E501", "B008"]

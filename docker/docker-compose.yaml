@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: datalumos-postgres
+    environment:
+      POSTGRES_DB: datalumos
+      POSTGRES_USER: datalumos
+      POSTGRES_PASSWORD: datalumos123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
