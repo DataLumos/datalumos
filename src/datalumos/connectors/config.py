@@ -19,10 +19,8 @@ class ConnectorConfig:
         }
 
     def get_dataset_name(self, source_type: str, source_name: Optional[str] = None) -> str:
-        """Generate a dataset name based on source type and optional source name."""
-        if source_name:
-            return f"{source_type}_{source_name}"
-        return source_type
+        """Generate a dataset name (PostgreSQL schema) - defaults to 'datalumos'."""
+        return "datalumos"
 
     def get_pipeline_name(self, source_type: str, source_name: Optional[str] = None) -> str:
         """Generate a pipeline name based on source type and optional source name."""
