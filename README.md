@@ -1,21 +1,64 @@
-# DataLumos
+# DataLumos 🔍
 
-An agentic system for data quality assurance and exploration using LLMs and multi-agent frameworks.
+An AI that actually understands your data before your code agents try to work with it.
 
-## Overview
+## What is this
 
-DataLumos is a Python-based system that uses AI agents to analyze, validate, and explore data across different sources. 
-It leverages LangChain, LangGraph, and MCP (Model Context Protocol) to provide intelligent data quality assessment and exploration capabilities.
+DataLumos is an agentic system that investigates your datasets and finds the issues hiding in them. 
 
-## Features
+Think of it like a flashlight for your data. It pokes around, figures out what's wrong, understands what the data *should* look like in your business context, and hands over a clean summary for you (or your code-writing AI agent) to fix things properly.
 
-- **Multi-Agent Architecture**: Specialized agents for different data QA tasks
-  - Column Analyzer: Analyzes column properties and data types
-  - Data Explorer: Performs exploratory data analysis
-  - Data Validator: Validates data quality and integrity
-- **Multiple Data Sources**: Supports PostgreSQL, S3, and filesystem sources
-- **Flexible Connectors**: Extensible connector system for various data sources
-- **CLI Interface**: Command-line tools for data ingestion and analysis
+## What's broken right now
+
+You scraped some data with BrowserUse? Great. You have a file that should be useful? Cool. But when Cursor tries to help you process it, it's flying blind. Your data is a black box.
+
+DataLumos is the missing piece - it shows you what's broken in the data
+
+## What makes it different
+
+🔍 **Context-aware inspections**
+
+Most data quality tools run generic checks. DataLumos digs into the business context first.
+
+Got US street addresses? DataLumos knows about USPS Publication 28 rules - that "ALLEE" should be "ALY", and suffixes go after street names. Got financial data? It understands decimal precision requirements. 
+
+**Context first, then validation.** Because not every dataset needs the same QA checks. 
+
+🛠️ **LLM-readable issue reports**
+
+Findings are formatted so that your LLM agent can act on them immediately. You don't need to explain anything - it already (finally) knows what to do.
+
+📦 **Built-in rules + agentic exploration**
+
+It doesn't just run a few checks. It thinks. Then it checks everything.
+
+## How it works
+
+1. **Investigate** - Figures out what your data actually represents
+2. **Contextualize** - Finds the real-world rules that apply to your domain
+3. **Validate** - Checks completeness, accuracy, validity, and timeliness
+4. **Report** - Gives you LLM-readable insights about what's broken
+
+No more "why is my agent hallucinating?" moments. Now you'll know it's because 30% of your postal codes are missing and half your dates are in the wrong format.
+
+## The comprehensive bit
+
+DataLumos doesn't just spot obvious problems. It runs through a systematic framework covering:
+
+- **Completeness** - What's missing and why it matters
+- **Accuracy** - What's wrong and how wrong it is
+- **Validity** - What violates domain rules
+- **Timeliness** - What's stale and what's not
+
+## When should I use it?
+
+- Before shipping data to prod
+- Before feeding data into an LLM
+- Before asking an LLM to build a data pipeline for processing raw data on which it has zero context
+- After scraping or collecting data from any new source
+- Anytime you want to *know* if there's something wrong with your data
+
+---
 
 ## Installation
 
@@ -77,56 +120,6 @@ The main agent system can be accessed through:
 
 ```python
 from datalumos.agents import main
-```
-
-### Docker Support
-
-A Docker Compose configuration is provided in the `docker/` directory for easy deployment.
-
-## Project Structure
-
-```
-src/datalumos/
-├── agents/           # AI agents for data analysis
-│   ├── column_analyser.py
-│   ├── data_explorer.py
-│   ├── data_validator.py
-│   ├── main.py
-│   └── prompts/      # Agent prompt templates
-├── connectors/       # Data source connectors
-│   ├── sources/      # Source implementations
-│   │   ├── filesystem_source.py
-│   │   ├── postgres_source.py
-│   │   └── s3_source.py
-│   └── cli.py        # Command-line interface
-```
-
-## Configuration
-
-The system uses environment-based configuration. Key dependencies include:
-
-- **LLM Providers**: Anthropic Claude, OpenAI
-- **Data Processing**: Pandas, SQLAlchemy
-- **Agent Framework**: LangChain, LangGraph
-- **Data Loading**: dlt (data load tool)
-
-## Development
-
-### Code Quality
-
-The project uses several tools for code quality:
-
-- **Black**: Code formatting
-- **isort**: Import sorting
-- **Ruff**: Linting
-- **MyPy**: Type checking
-
-Run quality checks:
-```bash
-black src/
-isort src/
-ruff check src/
-mypy src/
 ```
 
 ### Testing
