@@ -136,13 +136,7 @@ def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]
         credentials = dest_config["credentials"]
 
         # Connect to database
-        conn = psycopg2.connect(
-            host=credentials["host"],
-            port=credentials["port"],
-            database=credentials["database"],
-            user=credentials["username"],
-            password=credentials["password"]
-        )
+        conn = psycopg2.connect(**config.postgres.connection_params)
 
         with conn.cursor() as cursor:
             dataset_name = pipeline.dataset_name
@@ -207,6 +201,7 @@ def load_data(
     source_config: Dict[str, Any],
     dataset_name: Optional[str] = None,
     pipeline_name: Optional[str] = None,
+    table_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Load data from various sources into local PostgreSQL database.
@@ -214,8 +209,9 @@ def load_data(
     Args:
         source_type: Type of source ('postgres', 's3', 'filesystem')
         source_config: Configuration dictionary for the source
-        dataset_name: Optional custom dataset name
+        dataset_name: Optional custom dataset name (PostgreSQL schema, defaults to 'datalumos')
         pipeline_name: Optional custom pipeline name
+        table_name: Optional custom table name (for single file sources)
 
     Returns:
         Dictionary containing load information and results
@@ -244,7 +240,7 @@ def load_data(
             f"Using pipeline: {pipeline_name}, dataset: {dataset_name}")
 
         # Create the appropriate source
-        source = _create_source(source_type, source_config)
+        source = _create_source(source_type, source_config, table_name)
 
         # Create and configure the pipeline
         dest_config = config.get_destination_config()
@@ -315,19 +311,19 @@ def _validate_source_config(source_type: str, source_config: Dict[str, Any]) -> 
         validator(source_config)
 
 
-def _create_source(source_type: str, source_config: Dict[str, Any]):
+def _create_source(source_type: str, source_config: Dict[str, Any], table_name: Optional[str] = None):
     """Create the appropriate dlt source based on source type."""
     if source_type == "postgres":
         from datalumos.connectors.sources.postgres_source import create_postgres_source
-        return create_postgres_source(source_config)
+        return create_postgres_source(source_config, table_name)
 
     elif source_type == "s3":
         from datalumos.connectors.sources.s3_source import create_s3_source
-        return create_s3_source(source_config)
+        return create_s3_source(source_config, table_name)
 
     elif source_type == "filesystem":
         from datalumos.connectors.sources.filesystem_source import create_filesystem_source
-        return create_filesystem_source(source_config)
+        return create_filesystem_source(source_config, table_name)
 
     else:
         raise ValueError(f"Unknown source type: {source_type}")

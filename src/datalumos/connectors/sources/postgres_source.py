@@ -5,7 +5,7 @@ from dlt.sources.sql_database import sql_database
 from datalumos.connectors.utils import logger, sanitize_table_name
 
 
-def create_postgres_source(config: Dict[str, Any]):
+def create_postgres_source(config: Dict[str, Any], table_name: Optional[str] = None):
     """
     Create a PostgreSQL source for dlt pipeline.
     

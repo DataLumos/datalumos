@@ -5,7 +5,7 @@ from dlt.sources.filesystem import filesystem
 from datalumos.connectors.utils import logger, sanitize_table_name
 
 
-def create_s3_source(config: Dict[str, Any]):
+def create_s3_source(config: Dict[str, Any], table_name: Optional[str] = None):
     """
     Create an S3 source for dlt pipeline.
     
