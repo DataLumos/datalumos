@@ -37,7 +37,8 @@ dependencies = [
     "dlt>=1.14.0",
     "dlt[duckdb]>=1.14.0",
     "rich>=13.9.5",
-    "typer>=0.16.0"
+    "typer>=0.16.0",
+    "pre-commit>=4.2.0",
 ]
 
 [project.optional-dependencies]
@@ -84,4 +85,4 @@ disallow_untyped_defs = true
 target-version = "py311"
 line-length = 88
 select = ["E", "F", "I", "N", "W", "B", "C4", "UP"]
-ignore = ["E501", "B008"]
+extend-select = ["SIM", "RUF", "TID"]
