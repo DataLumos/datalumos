@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 from collections import namedtuple
+from datalumos.core import DEFAULT_POSTGRES_CONFIG, PostgreSQLConfig
 
 Column = namedtuple('Column', ['name', 'data_type'])
 
@@ -14,15 +15,32 @@ class TableProperties:
 
 
 class PostgresDB:
-    def __init__(self, dbname: str, user: str, password: str, host: str = 'localhost', port: int = 5432):
-        self.dbname = dbname
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
+    """Database inspector tool for PostgreSQL databases."""
+
+    def __init__(self, dbname: str = None, user: str = None, password: str = None,
+                 host: str = None, port: int = None, config: PostgreSQLConfig = None):
+        """Initialize PostgresDB with connection parameters.
+
+        Args:
+            dbname: Database name (falls back to config)
+            user: Username (falls back to config)
+            password: Password (falls back to config)
+            host: Host (falls back to config)
+            port: Port (falls back to config)
+            config: PostgreSQLConfig instance (falls back to DEFAULT_POSTGRES_CONFIG)
+        """
+        if config is None:
+            config = DEFAULT_POSTGRES_CONFIG
+
+        self.dbname = dbname or config.database
+        self.user = user or config.username
+        self.password = password or config.password
+        self.host = host or config.host
+        self.port = port or config.port
         self.conn: psycopg2.extensions.connection | None = None
 
     def connect(self):
+        """Establish database connection."""
         if self.conn is None or self.conn.closed:
             self.conn = psycopg2.connect(
                 dbname=self.dbname,
@@ -33,10 +51,20 @@ class PostgresDB:
             )
 
     def close(self):
+        """Close database connection."""
         if self.conn and not self.conn.closed:
             self.conn.close()
 
     def get_column_names(self, table: str, schema: str) -> list[Column]:
+        """Get column names and data types for a table.
+
+        Args:
+            table: Table name
+            schema: Schema name
+
+        Returns:
+            List of Column namedtuples with name and data_type
+        """
         self.connect()
         with self.conn.cursor() as cur:
             query = sql.SQL(f"""
@@ -52,6 +80,15 @@ class PostgresDB:
         return columns
 
     def get_table_stats(self, table: str, schema: str) -> TableProperties:
+        """Get comprehensive table statistics including column-level stats.
+
+        Args:
+            table: Table name
+            schema: Schema name
+
+        Returns:
+            TableProperties object with table and column statistics
+        """
         self.connect()
         with self.conn.cursor() as cur:
             # Get total row count
@@ -97,8 +134,10 @@ class PostgresDB:
             return TableProperties(table, schema, total_count, column_stats)
 
     def __enter__(self):
+        """Context manager entry."""
         self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
         self.close()

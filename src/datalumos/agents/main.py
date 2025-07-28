@@ -10,7 +10,7 @@ from datalumos.agents.data_explorer import DataExplorerAgent, TableAnalysisOutpu
 from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysisOutput
 from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
 from datalumos.agents.utils import run_agent_with_retries
-from datalumos.connectors.local_postgres_client import PostgresDB
+from datalumos.services.postgres import PostgresDB
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
 
 
@@ -52,13 +52,7 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
 
     results = AnalysisResults()
 
-    db = PostgresDB(
-        dbname=config.postgres_config.database,
-        user=config.postgres_config.username,
-        password=config.postgres_config.password,
-        host=config.postgres_config.host,
-        port=config.postgres_config.port,
-    )
+    db = PostgresDB(config=config.postgres_config)
 
     postgres_mcp_params = {
         "command": "npx",
@@ -77,7 +71,8 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
 
         # Step 1: Explore the table
         logger.info("Step 1: Table exploration")
-        explorer = DataExplorerAgent(mcp_servers=[mcp_server], table_name=table_name, columns=columns)
+        explorer = DataExplorerAgent(
+            mcp_servers=[mcp_server], table_name=table_name, columns=columns)
         question = f"Analyze {table_name} table in the {schema} schema"
 
         explorer_result = await Runner.run(explorer, question)
