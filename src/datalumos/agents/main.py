@@ -11,6 +11,7 @@ from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysis
 from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.connectors.local_postgres_client import PostgresDB
+from datalumos.core import DEFAULT_POSTGRES_CONFIG
 
 
 # Configure logging
@@ -24,21 +25,13 @@ logger = logging.getLogger("datalumos")
 @dataclass
 class Config:
     """Minimal configuration for Data Lumos"""
-    db_host: str = "localhost"
-    db_port: int = 5432
-    db_name: str = "datalumos"
-    db_user: str = "datalumos"
-    db_password: str = "datalumos123"
+    postgres_config: object = DEFAULT_POSTGRES_CONFIG
     openai_key: str | None = None
 
     @classmethod
     def from_env(cls) -> "Config":
         return cls(
-            db_host=os.getenv("DL_DB_HOST", "localhost"),
-            db_port=int(os.getenv("DL_DB_PORT", "5432")),
-            db_name=os.getenv("DL_DB_NAME", "datalumos"),
-            db_user=os.getenv("DL_DB_USER", "datalumos"),
-            db_password=os.getenv("DL_DB_PASSWORD", "datalumos123"),
+            postgres_config=DEFAULT_POSTGRES_CONFIG,
             openai_key=os.getenv("OPENAI_API_KEY"),
         )
 
@@ -60,11 +53,11 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
     results = AnalysisResults()
 
     db = PostgresDB(
-        dbname=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
-        host=config.db_host,
-        port=config.db_port,
+        dbname=config.postgres_config.database,
+        user=config.postgres_config.username,
+        password=config.postgres_config.password,
+        host=config.postgres_config.host,
+        port=config.postgres_config.port,
     )
 
     postgres_mcp_params = {
@@ -72,7 +65,7 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
         "args": [
             "-y",
             "@modelcontextprotocol/server-postgres",
-            f"postgresql://{config.db_user}:{config.db_password}@{config.db_host}:{config.db_port}/{config.db_name}",
+            config.postgres_config.connection_string,
             "--access-mode=restricted",
         ],
     }

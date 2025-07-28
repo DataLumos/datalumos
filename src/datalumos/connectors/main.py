@@ -136,13 +136,7 @@ def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]
         credentials = dest_config["credentials"]
 
         # Connect to database
-        conn = psycopg2.connect(
-            host=credentials["host"],
-            port=credentials["port"],
-            database=credentials["database"],
-            user=credentials["username"],
-            password=credentials["password"]
-        )
+        conn = psycopg2.connect(**config.postgres.connection_params)
 
         with conn.cursor() as cursor:
             dataset_name = pipeline.dataset_name
