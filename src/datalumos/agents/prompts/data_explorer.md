@@ -10,7 +10,7 @@ The table you will be analyzing is named and is in the postgreSQL database:
 Here is the information about the columns in the table:
 
 <column_info>
-{{COLUMN_INFO}}
+{{COLUMNS}}
 </column_info>
 
 Begin by examining the column names, data types, and any sample values provided. Think about what each column might represent and how they relate to each other.
