@@ -96,13 +96,12 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
         logger.info(triage_result.final_output)
 
         high_priority_columns = [c.column_name for c in triage_result.final_output.column_classifications if c.classification == ColumnImportance.HIGH]
-        print(high_priority_columns)
+        logger.info(f"Based on the triage, the high priority columns are: {high_priority_columns}")
         semaphore = asyncio.Semaphore(3)
-        breakpoint()
         # Launch tasks
         column_validation_tasks = [
             analyse_and_validate_column(
-                column_name=col.name,
+                column_name=col,
                 table_name=table_name,
                 schema=schema,
                 mcp_server=mcp_server,

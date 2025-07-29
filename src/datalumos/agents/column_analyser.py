@@ -5,6 +5,8 @@ from agents import WebSearchTool
 
 from datalumos.agents.config import MODEL
 from datalumos.agents.utils import load_agent_prompt
+from datalumos.agents.tools import get_file_search_tool
+
 
 NAME = "Column Analyser"
 
@@ -13,12 +15,15 @@ class ColumnAnalyserAgent(Agent):
     """Column Analyser agent configured for column analysis."""
 
     def __init__(self, mcp_servers: list[MCPServerStdio], column_name: str, table_context: str):
+        tools = [WebSearchTool()]
+        tools.extend(get_file_search_tool())
+        
         super().__init__(
             name=NAME,
             instructions=load_agent_prompt(NAME).format(
                 column_name=column_name, table_context=table_context),
             output_type=ColumnAnalysisOutput,
-            tools=[WebSearchTool()],
+            tools=tools,
             mcp_servers=mcp_servers,
             model=MODEL
         )

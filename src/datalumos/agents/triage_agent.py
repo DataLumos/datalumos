@@ -5,6 +5,7 @@ from agents.mcp import MCPServerStdio
 from agents import WebSearchTool
 from datalumos.agents.config import MODEL
 from datalumos.agents.utils import load_agent_prompt
+from datalumos.agents.tools import get_file_search_tool
 
 NAME = "Triage Agent"
 
@@ -16,12 +17,14 @@ class TriageAgent(Agent):
         self,
         mcp_servers: list[MCPServerStdio]
     ):
+        tools = [WebSearchTool()]
+        tools.extend(get_file_search_tool())
 
         super().__init__(
             name=NAME,
             instructions=load_agent_prompt(NAME),
             output_type=TriageOutput,
-            tools=[WebSearchTool()],
+            tools=tools,
             mcp_servers=mcp_servers,
             model=MODEL
         )

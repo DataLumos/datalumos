@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from datalumos.agents.config import MODEL
 from datalumos.agents.utils import load_agent_prompt
+from datalumos.agents.tools import get_file_search_tool
 
 NAME = "Data Validator"
 
@@ -28,7 +29,7 @@ class DataValidatorAgent(Agent):
             instructions=load_agent_prompt(NAME).format(input_format=input_format, table_name=table_name, schema_name=schema_name,
                                                         table_context=table_context),
             output_type=DataValidatorOutput,
-            tools=[],
+            tools=get_file_search_tool(),
             mcp_servers=mcp_servers,
             model=MODEL
         )
