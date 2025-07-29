@@ -23,7 +23,8 @@ Based on your analysis, provide the following outputs:
 
 1. <table_description>
    Write a clear explanation of what the table represents.
-   </table_description>
+C  an you determine the geographic area this dataset comes from? If so, include this information in the description, as geographic context is important for proper data interpretation.
+</table_description>
 
 
 2. <business_context>
