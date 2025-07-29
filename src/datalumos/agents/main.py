@@ -8,6 +8,7 @@ from agents.mcp import MCPServerStdio
 from datalumos.agents.data_explorer import DataExplorerAgent, TableAnalysisOutput
 from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysisOutput
 from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
+from datalumos.agents.triage_agent import TriageAgent, ColumnImportance
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.services.postgres import PostgresDB
 from datalumos.logging import setup_logging, get_logger
@@ -80,10 +81,24 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
         # Step 2: Analyze first column (keeping it simple)
         logger.info("Step 2: Column analysis")
 
-        columns = db.get_column_names(table=table_name, schema=schema)[:4]
+        columns = db.get_column_names(table=table_name, schema=schema)
 
+        triage_agent = TriageAgent(
+            mcp_servers=[mcp_server]
+        )
+
+        triage_result = await Runner.run(
+            triage_agent, 
+            f"Analyze and triage the columns in table {schema}.{table_name}. "
+            f"Table description: {results.table_analysis.table_description}. "
+            f"Columns to classify: {[c.name for c in columns]}"
+        )
+        logger.info(triage_result.final_output)
+
+        high_priority_columns = [c.column_name for c in triage_result.final_output.column_classifications if c.classification == ColumnImportance.HIGH]
+        print(high_priority_columns)
         semaphore = asyncio.Semaphore(3)
-
+        breakpoint()
         # Launch tasks
         column_validation_tasks = [
             analyse_and_validate_column(
@@ -94,14 +109,11 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
                 results=results,
                 semaphore=semaphore,
             )
-            for col in columns
+            for col in high_priority_columns
         ]
 
         await asyncio.gather(*column_validation_tasks)
         return results
-
-    logger.info("Analysis complete for %s.%s", schema, table_name)
-    return results
 
 
 logger = logging.getLogger(__name__)
