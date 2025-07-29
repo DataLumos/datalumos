@@ -113,6 +113,36 @@ def delete(
         sys.exit(1)
 
 
+@app.command()
+def delete_store(
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt")
+) -> None:
+    """Delete the entire default DataLumos vector store and all its documents."""
+    try:
+        setup_logging()
+        manager = KnowledgeManager()
+        vector_store_id = manager.get_default_store_id()
+        if not vector_store_id:
+            console.print("No DataLumos vector store found to delete.")
+            return
+        if not confirm:
+            confirm_delete = typer.confirm(
+                f"Are you sure you want to delete the entire DataLumos vector store (ID: {vector_store_id})? This will remove all documents and cannot be undone."
+            )
+            if not confirm_delete:
+                console.print("Operation cancelled.")
+                return
+        success = manager.delete_vector_store(vector_store_id)
+        if success:
+            console.print(f"✓ Vector store deleted successfully! Store ID: {vector_store_id}")
+        else:
+            console.print(f"[red]Failed to delete vector store {vector_store_id}[/red]")
+            sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+
 def main() -> None:
     """Main entry point for the CLI."""
     app()
