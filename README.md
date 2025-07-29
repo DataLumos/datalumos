@@ -116,7 +116,7 @@ See the [connectors README](src/datalumos/connectors/README.md) for more detaile
 
 ### Running Agents
 
-The main agent system can be accessed through:
+The main agent system can be started with:
 
 ```python
 from datalumos.agents import main
@@ -127,6 +127,22 @@ from datalumos.agents import main
 Run tests with pytest:
 ```bash
 pytest
+```
+
+## Running the Agentic System
+
+You can run the DataLumos QA agentic system from the command line using the following command:
+
+```sh
+datalumos-qa --table <TABLE_NAME> --schema <SCHEMA_NAME>
+```
+
+Replace `<TABLE_NAME>` with the name of your database table and `<SCHEMA_NAME>` with the schema containing the table.
+
+### Example
+
+```sh
+datalumos-qa --table dtdc_curier --schema datalumos
 ```
 
 ## License

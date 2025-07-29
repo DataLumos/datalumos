@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import typer
 from dataclasses import dataclass, field
 
 from agents import Runner, set_default_openai_key
@@ -11,15 +10,13 @@ from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysis
 from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.services.postgres import PostgresDB
+from datalumos.logging import setup_logging, get_logger
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
 
 
 # Configure logging
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO").upper(),
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-)
-logger = logging.getLogger("datalumos")
+setup_logging()
+logger = get_logger("datalumos")
 
 
 @dataclass
@@ -77,9 +74,8 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
 
         explorer_result = await Runner.run(explorer, question)
         results.table_analysis = explorer_result.final_output
-        logger.info("Table exploration complete")
-        print("\n=== TABLE ANALYSIS ===")
-        print(results.table_analysis)
+        logger.info(f"Table exploration complete for {schema}.{table_name}")
+        logger.info(explorer_result.final_output)
 
         # Step 2: Analyze first column (keeping it simple)
         logger.info("Step 2: Column analysis")
@@ -147,8 +143,8 @@ async def analyse_and_validate_column(
         results.column_analysis.append(analyzer_result.final_output)
 
         logger.info("Column analysis complete for: %s", column_name)
-        print(f"\n=== COLUMN ANALYSIS ({column_name}) ===")
-        print(analyzer_result.final_output)
+        logger.info(f"\n=== COLUMN ANALYSIS ({column_name}) ===")
+        logger.info(analyzer_result.final_output)
 
         validator = DataValidatorAgent(
             table_name=table_name,
@@ -172,26 +168,5 @@ async def analyse_and_validate_column(
         results.validation_result.append(validation_result.final_output)
 
         logger.info("Validation complete for: %s", column_name)
-        print(f"\n=== VALIDATION ({column_name}) ===")
-        print(validation_result.final_output)
-
-
-def main(
-    table_name: str = typer.Option(..., "--table_name",
-                                   help="Name of the database table to analyze"),
-    schema_name: str = typer.Option(..., "--schema_name",
-                                    help="Database schema containing the table")
-):
-    """
-    Run DataLumos QA analysis on a database table.
-
-    This flow performs quality assurance checks on the specified table within
-    the given schema, including table structure analysis, column profiling,
-    and data validation.
-    """
-    config = Config.from_env()
-    asyncio.run(analyze_table(table_name, schema_name, config))
-
-
-if __name__ == "__main__":
-    typer.run(main)
+        logger.info(f"\n=== VALIDATION ({column_name}) ===")
+        logger.info(validation_result.final_output)

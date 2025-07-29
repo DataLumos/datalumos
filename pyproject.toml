@@ -39,6 +39,7 @@ dependencies = [
     "rich>=13.9.5",
     "typer>=0.16.0",
     "pre-commit>=4.2.0",
+    "rich>=13.9.5",
 ]
 
 [project.optional-dependencies]
@@ -62,6 +63,7 @@ Issues = "https://github.com/yourusername/dataqa/issues"
 
 [project.scripts]
 datalumos-ingest = "datalumos.connectors.cli:main"
+datalumos-qa = "datalumos.agents.cli:main"
 
 [build-system]
 requires = ["hatchling"]
