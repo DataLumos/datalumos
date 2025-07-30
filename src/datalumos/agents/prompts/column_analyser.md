@@ -83,7 +83,7 @@ Phone number following the North American Numbering Plan (NANP) standard used fo
 ### 2. Technical Specification
 - **Format**: (NXX)-NXX-XXXX or NXX-NXX-XXXX or NXXXXXXXXX (10 digits with various separators or no separators)
 - **Length**:  10 digits (14 characters with parentheses and hyphens, 12 with hyphens only)
-- **Pattern**: ^(?[2-9]\d{2})?[-.\s]?[2-9]\d{2}[-.\s]?\d{4}$
+- **Pattern**: ^(?[2-9]\d{{2}})?[-.\s]?[2-9]\d{{2}}[-.\s]?\d{{4}}$
 
 
 ### 3. Valid Values

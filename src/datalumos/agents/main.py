@@ -98,7 +98,6 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
         high_priority_columns = [c.column_name for c in triage_result.final_output.column_classifications if c.classification == ColumnImportance.HIGH]
         logger.info(f"Based on the triage, the high priority columns are: {high_priority_columns}")
         semaphore = asyncio.Semaphore(3)
-        
         # Launch tasks
         column_validation_tasks = [
             analyse_and_validate_column(
@@ -145,11 +144,8 @@ async def analyse_and_validate_column(
             ),
         )
         # TODO: move this to the column_analyser module
-        question = (
-            f"Analyze {column_name} column in table {table_name} "
-            f"in the {schema} schema"
-        )
-
+        question = f"Analyze {column_name} column in table {table_name} in the {schema} schema"
+        
         analyzer_result = await run_agent_with_retries(fn=lambda: Runner.run(analyzer, question))
 
         results.column_analysis.append(analyzer_result.final_output)

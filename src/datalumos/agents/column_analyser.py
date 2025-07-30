@@ -17,7 +17,6 @@ class ColumnAnalyserAgent(Agent):
     def __init__(self, mcp_servers: list[MCPServerStdio], column_name: str, table_context: str):
         tools = [WebSearchTool()]
         tools.extend(get_file_search_tool())
-        
         super().__init__(
             name=NAME,
             instructions=load_agent_prompt(NAME).format(
