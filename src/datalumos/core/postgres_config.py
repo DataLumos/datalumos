@@ -1,8 +1,8 @@
 """Centralized PostgreSQL configuration for Data Lumos."""
 
-import os
 from typing import Dict, Any
 from dataclasses import dataclass
+from datalumos.config import config
 
 
 @dataclass
@@ -19,12 +19,12 @@ class PostgreSQLConfig:
     def from_env(cls) -> "PostgreSQLConfig":
         """Create configuration from environment variables with fallback to defaults."""
         return cls(
-            host=os.getenv("DL_DB_HOST", "localhost"),
-            port=int(os.getenv("DL_DB_PORT", "5432")),
-            database=os.getenv("DL_DB_NAME", "datalumos"),
-            username=os.getenv("DL_DB_USER", "datalumos"),
-            password=os.getenv("DL_DB_PASSWORD", "datalumos123"),
-            schema=os.getenv("DL_DB_SCHEMA", "public")
+            host=config.DL_DB_HOST,
+            port=config.DL_DB_PORT,
+            database=config.DL_DB_NAME,
+            username=config.DL_DB_USER,
+            password=config.DL_DB_PASSWORD,
+            schema=config.DL_DB_SCHEMA
         )
 
     @property

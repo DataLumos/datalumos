@@ -5,10 +5,10 @@ Provides high-level interface for managing vector stores, uploading documents,
 and integrating with OpenAI's File Search functionality.
 """
 
-import os
 from typing import Any
 from openai import OpenAI
 
+from datalumos.config import config
 from datalumos.knowledge.uploader import FileUploader
 from datalumos.logging import get_logger
 
@@ -33,7 +33,7 @@ class KnowledgeManager:
         Args:
             openai_api_key: OpenAI API key. If not provided, will use OPENAI_API_KEY env var.
         """
-        api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+        api_key = openai_api_key or config.OPENAI_API_KEY
         if not api_key:
             raise ValueError("OpenAI API key is required. Provide it or set OPENAI_API_KEY env var.")
             

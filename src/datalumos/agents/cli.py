@@ -4,7 +4,7 @@
 import argparse
 import asyncio
 import sys
-from datalumos.agents.main import Config, analyze_table
+from datalumos.agents.main import AgentConfig, analyze_table
 from datalumos.logging import setup_logging
 
 
@@ -54,7 +54,7 @@ def main():
         print("🔍 Starting Data Lumos QA analysis...")
         print(f"📋 Table: {args.schema_name}.{args.table_name}")
 
-        config = Config.from_env()
+        config = AgentConfig.from_env()
         asyncio.run(analyze_table(args.table_name, args.schema_name, config))
 
         print("✅ Analysis completed successfully.")

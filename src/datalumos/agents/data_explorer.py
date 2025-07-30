@@ -1,7 +1,7 @@
 from agents import WebSearchTool
 from pydantic import BaseModel
 from agents import Agent
-from datalumos.agents.config import MODEL
+from datalumos.config import config
 from agents.mcp import MCPServerStdio
 from datalumos.agents.utils import load_agent_prompt
 from datalumos.agents.tools import get_file_search_tool
@@ -22,7 +22,7 @@ class DataExplorerAgent(Agent):
             output_type=TableAnalysisOutput,
             tools=tools,
             mcp_servers=mcp_servers,
-            model=MODEL
+            model=config.OPENAI_API_MODEL
         )
 
 

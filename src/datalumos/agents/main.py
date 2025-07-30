@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 from dataclasses import dataclass, field
 
 from agents import Runner, set_default_openai_key
@@ -10,6 +9,7 @@ from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysis
 from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
 from datalumos.agents.triage_agent import TriageAgent, ColumnImportance
 from datalumos.agents.utils import run_agent_with_retries
+from datalumos.config import config
 from datalumos.services.postgres import PostgresDB
 from datalumos.logging import setup_logging, get_logger
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
@@ -21,16 +21,16 @@ logger = get_logger("datalumos")
 
 
 @dataclass
-class Config:
+class AgentConfig:
     """Minimal configuration for Data Lumos"""
     postgres_config: object
     openai_key: str | None = None
 
     @classmethod
-    def from_env(cls) -> "Config":
+    def from_env(cls) -> "AgentConfig":
         return cls(
             postgres_config=DEFAULT_POSTGRES_CONFIG,
-            openai_key=os.getenv("OPENAI_API_KEY"),
+            openai_key=config.OPENAI_API_KEY,
         )
 
 
@@ -42,7 +42,7 @@ class AnalysisResults:
     validation_result: list[DataValidatorOutput] = field(default_factory=list)
 
 
-async def analyze_table(table_name: str, schema: str, config: Config) -> AnalysisResults:
+async def analyze_table(table_name: str, schema: str, config: AgentConfig) -> AnalysisResults:
     """Main orchestration function - runs all three agents sequentially"""
 
     if config.openai_key:

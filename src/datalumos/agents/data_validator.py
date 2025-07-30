@@ -2,7 +2,7 @@ from agents import Agent
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 from enum import Enum
-from datalumos.agents.config import MODEL
+from datalumos.config import config
 from datalumos.agents.utils import load_agent_prompt
 from datalumos.agents.tools import get_file_search_tool
 
@@ -31,7 +31,7 @@ class DataValidatorAgent(Agent):
             output_type=DataValidatorOutput,
             tools=get_file_search_tool(),
             mcp_servers=mcp_servers,
-            model=MODEL
+            model=config.OPENAI_API_MODEL
         )
 
 

@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from agents import Agent
 from agents.mcp import MCPServerStdio
 from agents import WebSearchTool
-from datalumos.agents.config import MODEL
+from datalumos.config import config
 from datalumos.agents.utils import load_agent_prompt
 from datalumos.agents.tools import get_file_search_tool
 
@@ -26,7 +26,7 @@ class TriageAgent(Agent):
             output_type=TriageOutput,
             tools=tools,
             mcp_servers=mcp_servers,
-            model=MODEL
+            model=config.OPENAI_API_MODEL
         )
 
 class ColumnImportance(str, Enum):
