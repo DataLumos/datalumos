@@ -1,5 +1,5 @@
 """Core configuration modules for Data Lumos."""
 
-from .postgres_config import PostgreSQLConfig, DEFAULT_POSTGRES_CONFIG
+from .postgres_config import DEFAULT_POSTGRES_CONFIG, PostgreSQLConfig
 
-__all__ = ["PostgreSQLConfig", "DEFAULT_POSTGRES_CONFIG"]
+__all__ = ["DEFAULT_POSTGRES_CONFIG", "PostgreSQLConfig"]

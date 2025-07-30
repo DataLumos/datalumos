@@ -10,4 +10,4 @@ understanding of the data domain.
 from .manager import KnowledgeManager
 from .uploader import FileUploader
 
-__all__ = ["KnowledgeManager", "FileUploader"]
+__all__ = ["FileUploader", "KnowledgeManager"]

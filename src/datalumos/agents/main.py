@@ -4,16 +4,16 @@ from dataclasses import dataclass, field
 
 from agents import Runner, set_default_openai_key
 from agents.mcp import MCPServerStdio
-from datalumos.agents.data_explorer import DataExplorerAgent, TableAnalysisOutput
+
 from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysisOutput
+from datalumos.agents.data_explorer import DataExplorerAgent, TableAnalysisOutput
 from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
-from datalumos.agents.triage_agent import TriageAgent, ColumnImportance
+from datalumos.agents.triage_agent import ColumnImportance, TriageAgent
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.config import config
-from datalumos.services.postgres import PostgresDB
-from datalumos.logging import setup_logging, get_logger
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
-
+from datalumos.logging import get_logger, setup_logging
+from datalumos.services.postgres import PostgresDB
 
 # Configure logging
 setup_logging()
@@ -23,6 +23,7 @@ logger = get_logger("datalumos")
 @dataclass
 class AgentConfig:
     """Minimal configuration for Data Lumos"""
+
     postgres_config: object
     openai_key: str | None = None
 
@@ -37,12 +38,15 @@ class AgentConfig:
 @dataclass
 class AnalysisResults:
     """Container for all analysis results"""
+
     table_analysis: TableAnalysisOutput | None = None
     column_analysis: list[ColumnAnalysisOutput] = field(default_factory=list)
     validation_result: list[DataValidatorOutput] = field(default_factory=list)
 
 
-async def analyze_table(table_name: str, schema: str, config: AgentConfig) -> AnalysisResults:
+async def analyze_table(
+    table_name: str, schema: str, config: AgentConfig
+) -> AnalysisResults:
     """Main orchestration function - runs all three agents sequentially"""
 
     if config.openai_key:
@@ -70,7 +74,8 @@ async def analyze_table(table_name: str, schema: str, config: AgentConfig) -> An
         # Step 1: Explore the table
         logger.info("Step 1: Table exploration")
         explorer = DataExplorerAgent(
-            mcp_servers=[mcp_server], table_name=table_name, columns=columns)
+            mcp_servers=[mcp_server], table_name=table_name, columns=columns
+        )
         question = f"Analyze {table_name} table in the {schema} schema"
 
         explorer_result = await Runner.run(explorer, question)
@@ -83,20 +88,24 @@ async def analyze_table(table_name: str, schema: str, config: AgentConfig) -> An
 
         columns = db.get_column_names(table=table_name, schema=schema)
 
-        triage_agent = TriageAgent(
-            mcp_servers=[mcp_server]
-        )
+        triage_agent = TriageAgent(mcp_servers=[mcp_server])
 
         triage_result = await Runner.run(
-            triage_agent, 
+            triage_agent,
             f"Analyze and triage the columns in table {schema}.{table_name}. "
             f"Table description: {results.table_analysis.table_description}. "
-            f"Columns to classify: {[(c.name, c.data_type) for c in columns]}"
+            f"Columns to classify: {[(c.name, c.data_type) for c in columns]}",
         )
         logger.info(triage_result.final_output)
 
-        high_priority_columns = [(c.column_name, c.column_type) for c in triage_result.final_output.column_classifications if c.classification == ColumnImportance.HIGH]
-        logger.info(f"Based on the triage, the high priority columns are: {high_priority_columns}")
+        high_priority_columns = [
+            (c.column_name, c.column_type)
+            for c in triage_result.final_output.column_classifications
+            if c.classification == ColumnImportance.HIGH
+        ]
+        logger.info(
+            f"Based on the triage, the high priority columns are: {high_priority_columns}"
+        )
         semaphore = asyncio.Semaphore(3)
         # Launch tasks
         column_validation_tasks = [
@@ -146,8 +155,11 @@ async def analyse_and_validate_column(
             ),
         )
         # TODO: move this to the column_analyser module
-        question = f"Analyze {column_name} column of type {column_type} in table {table_name} in the {schema} schema"
-        
+        question = (
+            f"Analyze {column_name} column of type {column_type} "
+            f"in table {table_name} in the {schema} schema"
+        )
+
         analyzer_result = await run_agent_with_retries(
             fn=Runner.run,
             agent=analyzer,
@@ -175,7 +187,8 @@ async def analyse_and_validate_column(
 
         # TODO: move this into the validator module
         validation_prompt = (
-            f"Validate {column_name} column. Column analysis output: {analyzer_result.final_output}"
+            f"Validate {column_name} column. "
+            f"Column analysis output: {analyzer_result.final_output}"
         )
         validation_result = await run_agent_with_retries(
             fn=Runner.run,

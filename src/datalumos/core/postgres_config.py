@@ -1,13 +1,15 @@
 """Centralized PostgreSQL configuration for Data Lumos."""
 
-from typing import Dict, Any
 from dataclasses import dataclass
+from typing import Any
+
 from datalumos.config import config
 
 
 @dataclass
 class PostgreSQLConfig:
     """Configuration for PostgreSQL connections with environment variable support."""
+
     host: str
     port: int
     database: str
@@ -24,7 +26,7 @@ class PostgreSQLConfig:
             database=config.DL_DB_NAME,
             username=config.DL_DB_USER,
             password=config.DL_DB_PASSWORD,
-            schema=config.DL_DB_SCHEMA
+            schema=config.DL_DB_SCHEMA,
         )
 
     @property
@@ -33,17 +35,17 @@ class PostgreSQLConfig:
         return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
     @property
-    def connection_params(self) -> Dict[str, Any]:
+    def connection_params(self) -> dict[str, Any]:
         """Get connection parameters as dictionary."""
         return {
             "host": self.host,
             "port": self.port,
             "database": self.database,
             "user": self.username,
-            "password": self.password
+            "password": self.password,
         }
 
-    def get_dlt_credentials(self) -> Dict[str, Any]:
+    def get_dlt_credentials(self) -> dict[str, Any]:
         """Get credentials in dlt format."""
         return {
             "database": self.database,

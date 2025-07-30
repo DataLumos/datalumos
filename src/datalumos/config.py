@@ -1,6 +1,7 @@
 """Centralized configuration for DataLumos with environment variable support."""
 
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,7 +9,7 @@ load_dotenv()
 
 class Config:
     """Centralized configuration class that loads all environment variables."""
-    
+
     # OpenAI Configuration
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     OPENAI_API_MODEL: str = os.getenv("OPENAI_API_MODEL", "gpt-4o")

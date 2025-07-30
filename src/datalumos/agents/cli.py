@@ -4,6 +4,7 @@
 import argparse
 import asyncio
 import sys
+
 from datalumos.agents.main import AgentConfig, analyze_table
 from datalumos.logging import setup_logging
 
@@ -16,14 +17,11 @@ def parse_arguments():
         epilog="""
 Examples:
   analyze --table customers --schema public
-        """
+        """,
     )
 
     parser.add_argument(
-        "--table",
-        dest="table_name",
-        required=True,
-        help="Table to analyze (required)"
+        "--table", dest="table_name", required=True, help="Table to analyze (required)"
     )
 
     parser.add_argument(
@@ -31,13 +29,11 @@ Examples:
         dest="schema_name",
         required=False,
         default="datalumos",
-        help="Schema containing the table. If not provided, the default schema is used."
+        help="Schema containing the table. If not provided, the default schema is used.",
     )
 
     parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
+        "-v", "--verbose", action="store_true", help="Enable verbose logging"
     )
 
     return parser.parse_args()

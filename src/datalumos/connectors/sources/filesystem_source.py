@@ -1,16 +1,17 @@
 """Filesystem source connector for Data Lumos."""
 
-import os
-import json
 import csv
-import dlt
-from typing import Dict, Any, Optional, List
+import json
+import os
 from pathlib import Path
-from dlt.sources.filesystem import filesystem
+from typing import Any
+
+import dlt
+
 from datalumos.connectors.utils import logger, sanitize_table_name
 
 
-def create_filesystem_source(config: Dict[str, Any], table_name: Optional[str] = None):
+def create_filesystem_source(config: dict[str, Any], table_name: str | None = None):
     """
     Create a filesystem source for dlt pipeline.
 
@@ -48,7 +49,11 @@ def create_filesystem_source(config: Dict[str, Any], table_name: Optional[str] =
 
         @dlt.resource(table_name="no_files_found")
         def empty_source():
-            yield {"message": "No files matched the pattern", "pattern": file_glob, "path": path}
+            yield {
+                "message": "No files matched the pattern",
+                "pattern": file_glob,
+                "path": path,
+            }
 
         return empty_source
 
@@ -80,15 +85,15 @@ def create_filesystem_source(config: Dict[str, Any], table_name: Optional[str] =
                 file_records = 0
                 file_skipped = 0
 
-                if file_format == 'json':
+                if file_format == "json":
                     for record in _process_json_file(file_path):
                         file_records += 1
                         yield record
-                elif file_format == 'jsonl':
+                elif file_format == "jsonl":
                     for record in _process_jsonl_file(file_path):
                         file_records += 1
                         yield record
-                elif file_format == 'csv':
+                elif file_format == "csv":
                     for record in _process_csv_file(file_path):
                         file_records += 1
                         yield record
@@ -97,20 +102,18 @@ def create_filesystem_source(config: Dict[str, Any], table_name: Optional[str] =
                     continue
 
                 total_records += file_records
-                logger.info(
-                    f"Completed {file_path}: {file_records} records processed")
+                logger.info(f"Completed {file_path}: {file_records} records processed")
 
             except Exception as e:
                 logger.error(f"Error processing file {file_path}: {e}")
                 continue
 
-        logger.info(
-            f"Processing complete: {total_records} total records processed")
+        logger.info(f"Processing complete: {total_records} total records processed")
 
     return load_file_content
 
 
-def list_files(config: Dict[str, Any], max_files: int = 100) -> List[str]:
+def list_files(config: dict[str, Any], max_files: int = 100) -> list[str]:
     """
     List files in a filesystem path.
 
@@ -153,7 +156,7 @@ def list_files(config: Dict[str, Any], max_files: int = 100) -> List[str]:
         return []
 
 
-def validate_filesystem_access(config: Dict[str, Any]) -> bool:
+def validate_filesystem_access(config: dict[str, Any]) -> bool:
     """
     Test filesystem access and permissions.
 
@@ -181,7 +184,7 @@ def validate_filesystem_access(config: Dict[str, Any]) -> bool:
             list(path.iterdir())
         elif path.is_file():
             # If it's a file, check if we can read it
-            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(path, encoding="utf-8", errors="ignore") as f:
                 f.read(1)  # Read just one character to test
 
         return True
@@ -191,7 +194,7 @@ def validate_filesystem_access(config: Dict[str, Any]) -> bool:
         return False
 
 
-def detect_file_format(config: Dict[str, Any]) -> Optional[str]:
+def detect_file_format(config: dict[str, Any]) -> str | None:
     """
     Attempt to detect file format from filesystem files.
 
@@ -211,7 +214,7 @@ def detect_file_format(config: Dict[str, Any]) -> Optional[str]:
     for file_path in files:
         path = Path(file_path)
         if path.suffix:
-            ext = path.suffix.lstrip('.').lower()
+            ext = path.suffix.lstrip(".").lower()
             extensions[ext] = extensions.get(ext, 0) + 1
 
     if not extensions:
@@ -233,7 +236,7 @@ def detect_file_format(config: Dict[str, Any]) -> Optional[str]:
     return format_mapping.get(most_common_ext)
 
 
-def get_file_stats(config: Dict[str, Any]) -> Dict[str, Any]:
+def get_file_stats(config: dict[str, Any]) -> dict[str, Any]:
     """
     Get statistics about files in the filesystem path.
 
@@ -276,15 +279,18 @@ def get_file_stats(config: Dict[str, Any]) -> Dict[str, Any]:
                     stats["largest_file"] = str(file_obj)
 
                 # File type
-                ext = file_obj.suffix.lstrip('.').lower(
-                ) if file_obj.suffix else "no_extension"
+                ext = (
+                    file_obj.suffix.lstrip(".").lower()
+                    if file_obj.suffix
+                    else "no_extension"
+                )
                 stats["file_types"][ext] = stats["file_types"].get(ext, 0) + 1
 
         # Convert bytes to human-readable format
-        stats["total_size_mb"] = round(
-            stats["total_size_bytes"] / (1024 * 1024), 2)
+        stats["total_size_mb"] = round(stats["total_size_bytes"] / (1024 * 1024), 2)
         stats["largest_file_size_mb"] = round(
-            stats["largest_file_size"] / (1024 * 1024), 2)
+            stats["largest_file_size"] / (1024 * 1024), 2
+        )
 
         return stats
 
@@ -294,7 +300,8 @@ def get_file_stats(config: Dict[str, Any]) -> Dict[str, Any]:
 
 # Private helper functions
 
-def _find_matching_files(path: str, file_glob: str, recursive: bool) -> List[Path]:
+
+def _find_matching_files(path: str, file_glob: str, recursive: bool) -> list[Path]:
     """Find files matching the pattern."""
     base_path = Path(path)
     matching_files = []
@@ -310,13 +317,13 @@ def _find_matching_files(path: str, file_glob: str, recursive: bool) -> List[Pat
 
 def _detect_format_from_extension(file_path: Path) -> str | None:
     """Detect file format from extension."""
-    ext = file_path.suffix.lower().lstrip('.')
+    ext = file_path.suffix.lower().lstrip(".")
     format_map = {
-        'json': 'json',
-        'jsonl': 'jsonl',
-        'csv': 'csv',
-        'tsv': 'csv',
-        'txt': 'csv'
+        "json": "json",
+        "jsonl": "jsonl",
+        "csv": "csv",
+        "tsv": "csv",
+        "txt": "csv",
     }
     if ext in format_map:
         return format_map[ext]
@@ -326,7 +333,7 @@ def _detect_format_from_extension(file_path: Path) -> str | None:
 
 def _process_json_file(file_path: Path):
     """Process a JSON file and yield records."""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         data = json.load(f)
 
         # Handle different JSON structures
@@ -336,14 +343,14 @@ def _process_json_file(file_path: Path):
                 try:
                     if isinstance(item, dict):
                         sanitized_item = _sanitize_data(item)
-                        sanitized_item['_file_source'] = str(file_path)
-                        sanitized_item['_record_index'] = i
+                        sanitized_item["_file_source"] = str(file_path)
+                        sanitized_item["_record_index"] = i
                         yield sanitized_item
                     else:
                         yield {
-                            'value': _sanitize_data(item),
-                            '_file_source': str(file_path),
-                            '_record_index': i
+                            "value": _sanitize_data(item),
+                            "_file_source": str(file_path),
+                            "_record_index": i,
                         }
                 except Exception as e:
                     logger.warning(f"Skipped record {i} in {file_path}: {e}")
@@ -352,24 +359,21 @@ def _process_json_file(file_path: Path):
             # Single JSON object
             try:
                 sanitized_data = _sanitize_data(data)
-                sanitized_data['_file_source'] = str(file_path)
+                sanitized_data["_file_source"] = str(file_path)
                 yield sanitized_data
             except Exception as e:
                 logger.warning(f"Skipped single object in {file_path}: {e}")
         else:
             # Primitive value
             try:
-                yield {
-                    'value': _sanitize_data(data),
-                    '_file_source': str(file_path)
-                }
+                yield {"value": _sanitize_data(data), "_file_source": str(file_path)}
             except Exception as e:
                 logger.warning(f"Skipped primitive value in {file_path}: {e}")
 
 
 def _process_jsonl_file(file_path: Path):
     """Process a JSONL file and yield records."""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         for line_num, line in enumerate(f):
             line = line.strip()
             if line:
@@ -377,43 +381,43 @@ def _process_jsonl_file(file_path: Path):
                     data = json.loads(line)
                     sanitized_data = _sanitize_data(data)
                     if isinstance(sanitized_data, dict):
-                        sanitized_data['_file_source'] = str(file_path)
-                        sanitized_data['_line_number'] = line_num + 1
+                        sanitized_data["_file_source"] = str(file_path)
+                        sanitized_data["_line_number"] = line_num + 1
                     yield sanitized_data
                 except Exception as e:
-                    logger.warning(
-                        f"Skipped line {line_num + 1} in {file_path}: {e}")
+                    logger.warning(f"Skipped line {line_num + 1} in {file_path}: {e}")
                     continue
 
 
 def _process_csv_file(file_path: Path):
     """Process a CSV file and yield records."""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         # Try to detect delimiter
         sample = f.read(1024)
         f.seek(0)
 
-        delimiter = ','
-        if '\t' in sample and sample.count('\t') > sample.count(','):
-            delimiter = '\t'
+        delimiter = ","
+        if "\t" in sample and sample.count("\t") > sample.count(","):
+            delimiter = "\t"
 
         reader = csv.DictReader(f, delimiter=delimiter)
         for row_num, row in enumerate(reader):
             try:
                 sanitized_row = _sanitize_data(dict(row))
-                sanitized_row['_file_source'] = str(file_path)
-                sanitized_row['_row_number'] = row_num + 1
+                sanitized_row["_file_source"] = str(file_path)
+                sanitized_row["_row_number"] = row_num + 1
                 yield sanitized_row
             except Exception as e:
-                logger.warning(
-                    f"Skipped row {row_num + 1} in {file_path}: {e}")
+                logger.warning(f"Skipped row {row_num + 1} in {file_path}: {e}")
                 continue
 
 
 def _sanitize_data(data):
     """Sanitize data to prevent SQL injection and encoding issues."""
     if isinstance(data, dict):
-        return {_sanitize_key(key): _sanitize_data(value) for key, value in data.items()}
+        return {
+            _sanitize_key(key): _sanitize_data(value) for key, value in data.items()
+        }
     elif isinstance(data, list):
         return [_sanitize_data(item) for item in data]
     elif isinstance(data, str):
@@ -426,11 +430,11 @@ def _sanitize_key(key):
     """Sanitize dictionary keys to be SQL-safe."""
     if isinstance(key, str):
         # Replace spaces and special characters in column names
-        sanitized = ''.join(c if c.isalnum() else '_' for c in key.lower())
+        sanitized = "".join(c if c.isalnum() else "_" for c in key.lower())
         # Ensure it starts with a letter
         if sanitized and sanitized[0].isdigit():
-            sanitized = 'col_' + sanitized
-        return sanitized or 'unknown_column'
+            sanitized = "col_" + sanitized
+        return sanitized or "unknown_column"
     return str(key)
 
 
@@ -439,19 +443,19 @@ def _sanitize_string(data: str) -> str:
     cleaned = data
 
     # Remove null bytes and control characters
-    cleaned = ''.join(char for char in cleaned if ord(char)
-                      >= 32 or char in '\n\t')
+    cleaned = "".join(char for char in cleaned if ord(char) >= 32 or char in "\n\t")
 
     # Replace problematic escape sequences
-    cleaned = cleaned.replace('\x00', '')  # Null bytes
-    cleaned = cleaned.replace('\\', '/')   # Backslashes cause escape issues
-    cleaned = cleaned.replace("'", "''")   # Escape single quotes for SQL
-    cleaned = cleaned.replace('"', '""')   # Escape double quotes
-    cleaned = cleaned.replace('\r\n', '\n').replace(
-        '\r', '\n')  # Normalize line endings
+    cleaned = cleaned.replace("\x00", "")  # Null bytes
+    cleaned = cleaned.replace("\\", "/")  # Backslashes cause escape issues
+    cleaned = cleaned.replace("'", "''")  # Escape single quotes for SQL
+    cleaned = cleaned.replace('"', '""')  # Escape double quotes
+    cleaned = cleaned.replace("\r\n", "\n").replace(
+        "\r", "\n"
+    )  # Normalize line endings
 
     # Remove any remaining problematic characters
-    cleaned = cleaned.replace('\b', '').replace('\f', '').replace('\v', '')
+    cleaned = cleaned.replace("\b", "").replace("\f", "").replace("\v", "")
 
     # Limit very long strings to prevent memory issues
     if len(cleaned) > 16000:  # Be more conservative with size

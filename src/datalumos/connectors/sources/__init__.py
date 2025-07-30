@@ -1,1 +1,1 @@
-"""Source implementations for different data systems.""" 
+"""Source implementations for different data systems."""

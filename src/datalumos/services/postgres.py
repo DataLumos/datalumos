@@ -1,13 +1,17 @@
+from collections import namedtuple
+
 import psycopg2
 from psycopg2 import sql
-from collections import namedtuple
+
 from datalumos.core import DEFAULT_POSTGRES_CONFIG, PostgreSQLConfig
 
-Column = namedtuple('Column', ['name', 'data_type'])
+Column = namedtuple("Column", ["name", "data_type"])
 
 
 class TableProperties:
-    def __init__(self, table_name: str, schema: str, total_rows: int, column_stats: list[dict]) -> None:
+    def __init__(
+        self, table_name: str, schema: str, total_rows: int, column_stats: list[dict]
+    ) -> None:
         self.table_name = table_name
         self.schema = schema
         self.total_rows = total_rows
@@ -17,8 +21,15 @@ class TableProperties:
 class PostgresDB:
     """Database inspector tool for PostgreSQL databases."""
 
-    def __init__(self, dbname: str = None, user: str = None, password: str = None,
-                 host: str = None, port: int = None, config: PostgreSQLConfig = None):
+    def __init__(
+        self,
+        dbname: str = None,
+        user: str = None,
+        password: str = None,
+        host: str = None,
+        port: int = None,
+        config: PostgreSQLConfig = None,
+    ):
         """Initialize PostgresDB with connection parameters.
 
         Args:
@@ -47,7 +58,7 @@ class PostgresDB:
                 user=self.user,
                 password=self.password,
                 host=self.host,
-                port=self.port
+                port=self.port,
             )
 
     def close(self):
@@ -67,16 +78,17 @@ class PostgresDB:
         """
         self.connect()
         with self.conn.cursor() as cur:
-            query = sql.SQL(f"""
+            query = sql.SQL(
+                f"""
                 SELECT column_name,
                 data_type
                 FROM information_schema.columns
                 WHERE table_schema = '{schema}' and table_name = '{table}'
                 ORDER BY table_schema, table_name, ordinal_position;
-            """)
+            """
+            )
             cur.execute(query)
-            columns = [Column(name=row[0], data_type=row[1])
-                       for row in cur.fetchall()]
+            columns = [Column(name=row[0], data_type=row[1]) for row in cur.fetchall()]
         return columns
 
     def get_table_stats(self, table: str, schema: str) -> TableProperties:
@@ -102,34 +114,41 @@ class PostgresDB:
 
             for col in columns:
                 # Get non-null count
-                null_query = sql.SQL(f"""
+                null_query = sql.SQL(
+                    f"""
                     SELECT COUNT(*)
                     FROM {schema}.{table}
                     WHERE {col.name} IS NOT NULL
-                """)
+                """
+                )
                 cur.execute(null_query)
                 non_null_count = cur.fetchone()[0]
 
                 # Calculate fill rate
-                fill_rate = (non_null_count / total_count *
-                             100) if total_count > 0 else 0
+                fill_rate = (
+                    (non_null_count / total_count * 100) if total_count > 0 else 0
+                )
 
                 # Get distinct values count
-                distinct_query = sql.SQL(f"""
+                distinct_query = sql.SQL(
+                    f"""
                     SELECT COUNT(DISTINCT {col.name})
                     FROM {schema}.{table}
-                """)
+                """
+                )
                 cur.execute(distinct_query)
                 distinct_count = cur.fetchone()[0]
 
-                column_stats.append({
-                    'column_name': col.name,
-                    'data_type': col.data_type,
-                    'total_rows': total_count,
-                    'non_null_count': non_null_count,
-                    'fill_rate': round(fill_rate, 2),
-                    'distinct_count': distinct_count
-                })
+                column_stats.append(
+                    {
+                        "column_name": col.name,
+                        "data_type": col.data_type,
+                        "total_rows": total_count,
+                        "non_null_count": non_null_count,
+                        "fill_rate": round(fill_rate, 2),
+                        "distinct_count": distinct_count,
+                    }
+                )
 
             return TableProperties(table, schema, total_count, column_stats)
 
