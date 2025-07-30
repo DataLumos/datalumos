@@ -28,7 +28,8 @@ async def run_agent_with_retries(
     attempts: int = 3, 
     last_error_message: str | None = None,
     base_delay: float = 1.0, 
-    backoff: float = 2.0
+    backoff: float = 2.0,
+    raise_on_failure: bool = False
 ) -> Any:
     """
     Run *fn* with retry, skipping retry for cancellation / fatal errors.
@@ -37,7 +38,10 @@ async def run_agent_with_retries(
     policy violations are respected.
     
     It also adds the previous error to the question if it is provided.
+    If raise_on_failure is False, logs and returns None on failure instead of raising.
     """
+    import logging
+    logger = logging.getLogger("datalumos.agents.utils")
     delay = base_delay
     question = f"{question}\nPrevious error: {last_error_message}" if last_error_message else question
     last_exception = None
@@ -54,4 +58,8 @@ async def run_agent_with_retries(
                 break
             await asyncio.sleep(delay)
             delay *= backoff
-    raise last_exception
+    if raise_on_failure:
+        raise last_exception
+    else:
+        logger.error(f"Agent call failed after {attempts} attempts for question: '{question}'. Last error: {last_error_message}")
+        return None
