@@ -91,7 +91,7 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
             triage_agent, 
             f"Analyze and triage the columns in table {schema}.{table_name}. "
             f"Table description: {results.table_analysis.table_description}. "
-            f"Columns to classify: {[c.name for c in columns]}"
+            f"Columns to classify: {[(c.name, c.data_type) for c in columns]}"
         )
         logger.info(triage_result.final_output)
 
@@ -148,7 +148,11 @@ async def analyse_and_validate_column(
         # TODO: move this to the column_analyser module
         question = f"Analyze {column_name} column of type {column_type} in table {table_name} in the {schema} schema"
         
-        analyzer_result = await run_agent_with_retries(fn=lambda: Runner.run(analyzer, question))
+        analyzer_result = await run_agent_with_retries(
+            fn=Runner.run,
+            agent=analyzer,
+            question=question,
+        )
 
         results.column_analysis.append(analyzer_result.final_output)
 
@@ -173,8 +177,11 @@ async def analyse_and_validate_column(
         validation_prompt = (
             f"Validate {column_name} column. Column analysis output: {analyzer_result.final_output}"
         )
-
-        validation_result = await Runner.run(starting_agent=validator, input=validation_prompt)
+        validation_result = await run_agent_with_retries(
+            fn=Runner.run,
+            agent=validator,
+            question=validation_prompt,
+        )
         results.validation_result.append(validation_result.final_output)
 
         logger.info("Validation complete for: %s", column_name)
