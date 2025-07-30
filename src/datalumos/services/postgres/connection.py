@@ -107,7 +107,7 @@ class PostgresDB:
             cur.execute(query)
             return cur.fetchone()[0]
 
-    def get_all_distinct_values(self, column: str, table: str, schema: str) -> list[str]:
+    def get_distinct_values(self, column: str, table: str, schema: str) -> list[str]:
         """Get all distinct values for a column."""
         self.connect()
         with self.conn.cursor() as cur:
@@ -115,6 +115,23 @@ class PostgresDB:
             cur.execute(query)
             return [row[0] for row in cur.fetchall()]
 
+    def get_column_type(self, column: str, table: str, schema: str): 
+        """Get the type of te column"""
+        self.connect()
+        with self.conn.cursor() as cur:
+            query = sql.SQL(
+                f"""
+                SELECT data_type 
+                FROM information_schema.columns
+                WHERE table_schema = '{schema}'
+                AND table_name = '{table}'
+                AND column_name = '{column}'
+                """
+            )
+            cur.execute(query)
+            result = cur.fetchone()
+            return result[0] if result else None
+        
 
     def get_table_stats(self, table: str, schema: str) -> TableProperties:
         """Get comprehensive table statistics including column-level stats.
