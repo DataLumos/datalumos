@@ -1,9 +1,10 @@
-from agents import Agent, WebSearchTool, Runner
+from pathlib import Path
+from typing import Final
+
+from agents import Agent, WebSearchTool
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel
 
-from pathlib import Path
-from typing import Final
 from datalumos.agents.tools import get_file_search_tool
 from datalumos.agents.utils import load_agent_prompt
 from datalumos.config import config
@@ -12,6 +13,7 @@ NAME = "Data Explorer"
 
 _CACHE_DIR: Final = Path.home() / ".datalumos" / "table_cache"
 _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
 
 class DataExplorerAgent(Agent):
     """Data Explorer agent configured for table analysis and business context extraction."""

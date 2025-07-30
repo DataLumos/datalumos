@@ -18,13 +18,12 @@ from agents import Runner
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
-from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
 from datalumos.agents.column_analyser import ColumnAnalysisOutput
+from datalumos.agents.data_validator import DataValidatorAgent, DataValidatorOutput
 from datalumos.agents.profile_flow import TableAnalysisResults
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.logging import get_logger
 from datalumos.services.postgres import PostgresDB
-
 
 logger = get_logger(__name__)
 
@@ -35,7 +34,10 @@ _CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 class ValidationResults(BaseModel):
     """Complete validation results for table columns."""
-    column_validations: list[DataValidatorOutput] = Field(description="Validation results for each column")
+
+    column_validations: list[DataValidatorOutput] = Field(
+        description="Validation results for each column"
+    )
 
 
 async def run_column_validation(
@@ -45,14 +47,14 @@ async def run_column_validation(
     table_name: str,
     db: PostgresDB,
     mcp_server: MCPServerStdio,
-    force_refresh: bool = False
+    force_refresh: bool = False,
 ) -> ValidationResults:
     """
     Run column validation based on table profiling results.
-    
+
     Validates specified columns using their semantic analysis from the table profiling phase
     to identify data quality issues and anomalies.
-    
+
     Args:
         table_profile_results: Results from table profiling containing column analyses
         columns: List of column names to validate
@@ -61,35 +63,33 @@ async def run_column_validation(
         db: PostgreSQL database connection for metadata access
         mcp_server: MCP server providing database query capabilities
         force_refresh: If True, bypass cache and perform fresh validation
-        
+
     Returns:
         ValidationResults: Complete validation results for specified columns
 
     """
     logger.info(f"Starting column validation for {schema}.{table_name}")
-    
+
     if not force_refresh:
         cached_results = _load_cached_results(schema, table_name)
         if cached_results:
             logger.info(f"Using cached validation results for {schema}.{table_name}")
             return cached_results
-    
+
     logger.info(f"Running column validations for columns: {columns}")
     column_validations = await _validate_columns(
         table_profile_results=table_profile_results,
         columns=columns,
         schema=schema,
         table_name=table_name,
-        mcp_server=mcp_server
+        mcp_server=mcp_server,
     )
-    
-    results = ValidationResults(
-        column_validations=column_validations
-    )
-    
+
+    results = ValidationResults(column_validations=column_validations)
+
     _save_cached_results(schema, table_name, results)
     logger.info(f"Column validation complete for {schema}.{table_name}")
-    
+
     return results
 
 
@@ -98,51 +98,51 @@ async def _validate_columns(
     columns: list[str],
     schema: str,
     table_name: str,
-    mcp_server: MCPServerStdio
+    mcp_server: MCPServerStdio,
 ) -> list[DataValidatorOutput]:
     """Validate specified columns using their analyses."""
     # Create a mapping of column names to their analyses
     column_analyses = table_profile_results.column_analyses
     analysis_map = {analysis.column_name: analysis for analysis in column_analyses}
-    
+
     semaphore = asyncio.Semaphore(3)  # Limit concurrent validation
-    
+
     async def validate_single_column(column: str) -> DataValidatorOutput:
         """Validate a single column."""
         async with semaphore:
             # Get the corresponding column analysis
             column_analysis = analysis_map.get(column)
             if not column_analysis:
-                logger.warning(f"No analysis found for column {column}, skipping validation")
+                logger.warning(
+                    f"No analysis found for column {column}, skipping validation"
+                )
                 return None
-            
+
             validator = DataValidatorAgent(
                 table_name=table_name,
                 schema_name=schema,
                 mcp_servers=[mcp_server],
                 input_format=str(ColumnAnalysisOutput.describe()),
                 column_name=column,
-                table_context=table_profile_results.table_context.table_description
+                table_context=table_profile_results.table_context.table_description,
             )
-            
+
             validation_prompt = (
                 f"Validate {column} column. "
                 f"Column analysis output: {column_analysis}"
             )
-            
+
             result = await run_agent_with_retries(
-                fn=Runner.run,
-                agent=validator,
-                question=validation_prompt
+                fn=Runner.run, agent=validator, question=validation_prompt
             )
-            
+
             logger.info(f"Column validation complete: {column}")
             return result.final_output
-    
+
     validation_tasks = [validate_single_column(col) for col in columns]
     validation_results = await asyncio.gather(*validation_tasks)
-    
-    # Filter out None results (columns without analysis). This could happen if the 
+
+    # Filter out None results (columns without analysis). This could happen if the
     # run with retry exhausted retries.
     return [result for result in validation_results if result is not None]
 
@@ -163,7 +163,9 @@ def _load_cached_results(schema: str, table_name: str) -> ValidationResults | No
     return None
 
 
-def _save_cached_results(schema: str, table_name: str, results: ValidationResults) -> None:
+def _save_cached_results(
+    schema: str, table_name: str, results: ValidationResults
+) -> None:
     """Save validation results to cache."""
     cache_file = _cache_file_path(schema, table_name)
     try:

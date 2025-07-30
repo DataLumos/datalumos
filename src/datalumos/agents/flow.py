@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 from agents import set_default_openai_key
 from agents.mcp import MCPServerStdio
-from datalumos.agents.profile_flow import profile
-from datalumos.agents.assert_validity_flow import run_column_validation
 
+from datalumos.agents.assert_validity_flow import run_column_validation
+from datalumos.agents.profile_flow import profile
 from datalumos.config import config
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
 from datalumos.logging import get_logger, setup_logging
@@ -30,9 +30,7 @@ class AgentConfig:
         )
 
 
-async def run(
-    table_name: str, schema: str, config: AgentConfig
-):
+async def run(table_name: str, schema: str, config: AgentConfig):
     """Main orchestration function - runs all three agents sequentially"""
 
     if config.openai_key:
@@ -52,25 +50,29 @@ async def run(
 
     async with MCPServerStdio(params=postgres_mcp_params) as mcp_server:
 
-        table_profile_results = await profile(schema=schema, table_name=table_name, db=db, mcp_server=mcp_server)
-        
+        table_profile_results = await profile(
+            schema=schema, table_name=table_name, db=db, mcp_server=mcp_server
+        )
+
         columns = db.get_column_names(table=table_name, schema=schema)
-        
+
         validation_results = await run_column_validation(
             table_profile_results=table_profile_results,
             columns=columns,
             schema=schema,
             table_name=table_name,
             db=db,
-            mcp_server=mcp_server
+            mcp_server=mcp_server,
         )
-        
+
         return table_profile_results, validation_results
 
 
-
 if __name__ == "__main__":
+
     async def main():
-        await run(schema="datalumos", table_name="dtdc_curier", config=AgentConfig.from_env())
+        await run(
+            schema="datalumos", table_name="dtdc_curier", config=AgentConfig.from_env()
+        )
 
     asyncio.run(main())
