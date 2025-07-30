@@ -1,10 +1,6 @@
-"""
-Tools utilities for DataLumos agents.
-"""
+from agents import FileSearchTool
 
-from agents.tool import FileSearchTool
-
-from datalumos.knowledge.manager import KnowledgeManager
+from datalumos.knowledge import KnowledgeManager
 from datalumos.logging import get_logger
 
 logger = get_logger(__name__)
