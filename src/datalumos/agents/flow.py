@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from agents import set_default_openai_key
 from agents.mcp import MCPServerStdio
 from datalumos.agents.profile_flow import profile
-from datalumos.agents.validity_flow import run_column_validation
+from datalumos.agents.assert_validity_flow import run_column_validation
 
 from datalumos.config import config
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
