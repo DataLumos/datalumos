@@ -106,4 +106,4 @@ select * from customers where cast(order_date as date)<cast('2020-01-01' as date
 ## Instructions
 Perform the analysis for the table: `{table_name}` (`{table_context}`) and schema: `{schema_name}`.
 
-For each column provided, create validation rules and execute the validation queries. Ensure all SQL queries are PostgreSQL-compatible and provide meaningful sample violations that help identify the root cause of data quality issues.
+For the column provided, create validation rules and execute the validation queries. Ensure all SQL queries are PostgreSQL-compatible and provide meaningful sample violations that help identify the root cause of data quality issues.
