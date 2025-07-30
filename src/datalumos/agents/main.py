@@ -95,20 +95,21 @@ async def analyze_table(table_name: str, schema: str, config: Config) -> Analysi
         )
         logger.info(triage_result.final_output)
 
-        high_priority_columns = [c.column_name for c in triage_result.final_output.column_classifications if c.classification == ColumnImportance.HIGH]
+        high_priority_columns = [(c.column_name, c.column_type) for c in triage_result.final_output.column_classifications if c.classification == ColumnImportance.HIGH]
         logger.info(f"Based on the triage, the high priority columns are: {high_priority_columns}")
         semaphore = asyncio.Semaphore(3)
         # Launch tasks
         column_validation_tasks = [
             analyse_and_validate_column(
-                column_name=col,
+                column_name=col_name,
+                column_type=col_type,
                 table_name=table_name,
                 schema=schema,
                 mcp_server=mcp_server,
                 results=results,
                 semaphore=semaphore,
             )
-            for col in high_priority_columns
+            for col_name, col_type in high_priority_columns
         ]
 
         await asyncio.gather(*column_validation_tasks)
@@ -120,6 +121,7 @@ logger = logging.getLogger(__name__)
 
 async def analyse_and_validate_column(
     column_name: str,
+    column_type: str,
     table_name: str,
     schema: str,
     mcp_server: str,
@@ -144,7 +146,7 @@ async def analyse_and_validate_column(
             ),
         )
         # TODO: move this to the column_analyser module
-        question = f"Analyze {column_name} column in table {table_name} in the {schema} schema"
+        question = f"Analyze {column_name} column of type {column_type} in table {table_name} in the {schema} schema"
         
         analyzer_result = await run_agent_with_retries(fn=lambda: Runner.run(analyzer, question))
 

@@ -22,7 +22,10 @@ For each column and its associated rules:
      - Identify violation patterns
      - Capture representative examples (limit 5)
 
-3. **Results Interpretation**
+3. **Run the query against the database** 
+  - You MUST QUERY THE DATABASE!. If you haven't query the database DO NOT write the result. 
+
+4. **Results Interpretation**
    - Analyze what the query results reveal about data quality
    - Distinguish between critical violations and minor inconsistencies
    - Suggest potential root causes when patterns are evident
@@ -62,46 +65,38 @@ Return a JSON object with this structure:
 **Input:**
 - Table: customer_orders
 - Column: order_date
-- Type: DATETIME
-- Requirement: Must be between 2020-01-01 and current date, no future dates
+- Type: date
+- Requirement: Must be greater than 2020-01-01
+
+The sql query will be: 
+
+select count(*) from customers where cast(order_date as date)<cast('2020-01-01' as date)
+Then, get the sample with: 
+select * from customers where cast(order_date as date)<cast('2020-01-01' as date) limit 5
 
 **Output:**
 ```json
 {{
   "column_validations": [
     {{
-      "column_name": "customer_id",
-      "column_type": "INT PRIMARY KEY",
+      "column_name": "order_date",
+      "column_type": "DATE",
       "rules_validated": [
         {{
           "rule_id": "R001",
-          "original_requirement": "Customer ID must not be null",
-          "validation_rule": "All customer_id values must be non-null",
-          "sql_query": "SELECT COUNT(*) FROM customers WHERE customer_id IS NULL",
+          "original_requirement": "order_date must be greater than 2020-01-01",
+          "validation_rule": "All order_date must be after 2020-01-01",
+          "sql_query": ["select count(*) from customers where order_date<cast('2020-01-01' as date)", "select * from customers where cast(order_date as date)<cast('2020-01-01' as date) limit 5"] 
           "validation_results": {{
             "violation_count": 3,
             "severity": "HIGH",
             "sample_violations": [
-              "Record 1: customer_id=null, email=orphan1@test.com",
-              "Record 2: customer_id=null, email=orphan2@test.com",
-              "Record 3: customer_id=null, email=orphan3@test.com"
+              "order_date='2019-01-01'",
+              "order_date='2018-01-01'",
+              "order_date='2017-01-01'",
             ]
           }}
         }},
-        {{
-          "rule_id": "R002",
-          "original_requirement": "Customer ID must be unique",
-          "validation_rule": "All customer_id values must be unique across all records",
-          "sql_query": "SELECT COUNT(*) FROM (SELECT customer_id FROM customers WHERE customer_id IS NOT NULL GROUP BY customer_id HAVING COUNT(*) > 1) AS duplicates",
-          "validation_results": {{
-            "violation_count": 2,
-            "severity": "HIGH",
-            "sample_violations": [
-              "Duplicate ID 1001: john1@test.com, john2@test.com",
-              "Duplicate ID 2005: mary1@test.com, mary2@test.com"
-            ]
-          }}
-        }}
       ]
     }}
   ]
@@ -111,4 +106,4 @@ Return a JSON object with this structure:
 ## Instructions
 Perform the analysis for the table: `{table_name}` (`{table_context}`) and schema: `{schema_name}`.
 
-For each column provided, create validation rules and execute the analysis following the format above. Ensure all SQL queries are PostgreSQL-compatible and provide meaningful sample violations that help identify the root cause of data quality issues.
+For each column provided, create validation rules and execute the validation queries. Ensure all SQL queries are PostgreSQL-compatible and provide meaningful sample violations that help identify the root cause of data quality issues.
