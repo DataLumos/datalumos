@@ -91,6 +91,31 @@ class PostgresDB:
             columns = [Column(name=row[0], data_type=row[1]) for row in cur.fetchall()]
         return columns
 
+    def get_random_sample(self, table: str, schema: str, sample_size: int) -> list[dict]:
+        """Get a random sample of rows from a table. Include the column names in the result."""
+        self.connect()
+        with self.conn.cursor() as cur:
+            query = sql.SQL(f"SELECT * FROM {schema}.{table} ORDER BY RANDOM() LIMIT {sample_size}")
+            cur.execute(query)
+            return [dict(zip([col[0] for col in cur.description], row)) for row in cur.fetchall()]
+    
+    def get_count_distinct_values(self, column: str, table: str, schema: str) -> int:
+        """Get the count of distinct values for a column."""
+        self.connect()
+        with self.conn.cursor() as cur:
+            query = sql.SQL(f"SELECT COUNT(DISTINCT {column}) FROM {schema}.{table}")
+            cur.execute(query)
+            return cur.fetchone()[0]
+
+    def get_all_distinct_values(self, column: str, table: str, schema: str) -> list[str]:
+        """Get all distinct values for a column."""
+        self.connect()
+        with self.conn.cursor() as cur:
+            query = sql.SQL(f"SELECT DISTINCT {column} FROM {schema}.{table}")
+            cur.execute(query)
+            return [row[0] for row in cur.fetchall()]
+
+
     def get_table_stats(self, table: str, schema: str) -> TableProperties:
         """Get comprehensive table statistics including column-level stats.
 
