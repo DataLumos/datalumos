@@ -51,5 +51,5 @@ class ColumnAnalysisOutput(BaseModel):
         """Return a dictionary of field names and their descriptions"""
         return {
             field_name: field.description
-            for field_name, field in cls.__fields__.items()
+            for field_name, field in cls.model_fields.items()
         }
