@@ -5,7 +5,7 @@ import argparse
 import asyncio
 import sys
 
-from datalumos.agents.main import AgentConfig, analyze_table
+from datalumos.agents.flow import AgentConfig, run
 from datalumos.logging import setup_logging
 
 
@@ -51,7 +51,9 @@ def main():
         print(f"📋 Table: {args.schema_name}.{args.table_name}")
 
         config = AgentConfig.from_env()
-        asyncio.run(analyze_table(args.table_name, args.schema_name, config))
+        table_profile_results, validation_results = asyncio.run(run(schema=args.schema_name, table_name=args.table_name, config=config))
+        print(table_profile_results)
+        print(validation_results)
 
         print("✅ Analysis completed successfully.")
 
