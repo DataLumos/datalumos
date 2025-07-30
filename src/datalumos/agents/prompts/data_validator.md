@@ -20,7 +20,7 @@ For each column and its associated rules:
    - Design queries to:
      - COUNT total violations
      - Identify violation patterns
-     - Capture representative examples (limit 5)
+     - Capture distinct representative examples (limit 5)
 
 3. **Run the query against the database** 
   - You MUST QUERY THE DATABASE!. If you haven't query the database DO NOT write the result. 
@@ -72,7 +72,7 @@ The sql query will be:
 
 select count(*) from customers where cast(order_date as date)<cast('2020-01-01' as date)
 Then, get the sample with: 
-select * from customers where cast(order_date as date)<cast('2020-01-01' as date) limit 5
+select distinct(order_date) from customers where cast(order_date as date)<cast('2020-01-01' as date) limit 5
 
 **Output:**
 ```json
