@@ -40,36 +40,3 @@ class TableAnalysisOutput(BaseModel):
     table_description: str
     business_context: str
     dataset_type: str
-
-
-async def get_table_context(
-    schema: str, table: str, db, mcp_server, *, force_refresh: bool = False
-) -> TableAnalysisOutput:
-    """
-    Get the table context for a given table. If the table context is already cached, return the cached value.
-    Otherwise, run the DataExplorerAgent to get the table context and save it to the cache.
-    """
-    if not force_refresh and (cached := load(schema, table)):
-        return cached
-
-    explorer = DataExplorerAgent(
-        mcp_servers=[mcp_server],
-        table_name=table,
-        columns=db.get_column_names(schema=schema, table=table),
-    )
-    res = await Runner.run(explorer, f"Analyse {schema}.{table}")
-    save(schema, table, res.final_output)
-    return res.final_output
-
-
-def _file(schema: str, table: str) -> Path:
-    return _CACHE_DIR / f"{schema}.{table}.json"
-
-
-def load(schema: str, table: str) -> TableAnalysisOutput | None:
-    p = _file(schema, table)
-    return TableAnalysisOutput.model_validate_json(p.read_text()) if p.exists() else None
-
-
-def save(schema: str, table: str, ctx: TableAnalysisOutput) -> None:
-    _file(schema, table).write_text(ctx.model_dump_json(indent=2))
