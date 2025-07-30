@@ -66,6 +66,7 @@ class PostgresDB:
         if self.conn and not self.conn.closed:
             self.conn.close()
 
+    
     def get_column_names(self, table: str, schema: str) -> list[Column]:
         """Get column names and data types for a table.
 
