@@ -38,6 +38,7 @@ class ColumnImportance(str, Enum):
 class ColumnClassification(BaseModel):
     """Classification results for a single column"""
     column_name: str
+    column_type: str
     classification: ColumnImportance
     reasoning: str = Field(description="Reasoning process for the column classification")
 
