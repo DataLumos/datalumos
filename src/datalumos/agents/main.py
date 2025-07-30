@@ -14,6 +14,7 @@ from datalumos.config import config
 from datalumos.core import DEFAULT_POSTGRES_CONFIG
 from datalumos.logging import get_logger, setup_logging
 from datalumos.services.postgres import PostgresDB
+from datalumos.agents.data_explorer import get_table_context
 
 # Configure logging
 setup_logging()
@@ -73,20 +74,14 @@ async def analyze_table(
 
         # Step 1: Explore the table
         logger.info("Step 1: Table exploration")
-        explorer = DataExplorerAgent(
-            mcp_servers=[mcp_server], table_name=table_name, columns=columns
-        )
-        question = f"Analyze {table_name} table in the {schema} schema"
+        explorer_result = await get_table_context(schema=schema, table=table_name, db=db, mcp_server=mcp_server)
 
-        explorer_result = await Runner.run(explorer, question)
-        results.table_analysis = explorer_result.final_output
+        results.table_analysis = explorer_result
         logger.info(f"Table exploration complete for {schema}.{table_name}")
-        logger.info(explorer_result.final_output)
+        logger.info(explorer_result)
 
         # Step 2: Analyze first column (keeping it simple)
         logger.info("Step 2: Column analysis")
-
-        columns = db.get_column_names(table=table_name, schema=schema)
 
         triage_agent = TriageAgent(mcp_servers=[mcp_server])
 
