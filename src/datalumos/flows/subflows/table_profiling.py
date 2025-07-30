@@ -10,7 +10,6 @@ to understand the business meaning and context behind tables and columns:
 
 All analysis results are cached to enable efficient reuse across multiple workflows.
 """
-
 import asyncio
 from pathlib import Path
 from typing import Final
@@ -19,16 +18,15 @@ from agents import Runner
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
-from datalumos.agents.column_analyser import ColumnAnalyserAgent, ColumnAnalysisOutput
-from datalumos.agents.data_explorer import DataExplorerAgent, TableAnalysisOutput
-from datalumos.agents.triage_agent import ColumnImportance, TriageAgent, TriageOutput
+from datalumos.agents.agents.column_analyser import ColumnAnalysisOutput, ColumnAnalyserAgent
+from datalumos.agents.agents.data_explorer import TableAnalysisOutput, DataExplorerAgent
+from datalumos.agents.agents.triage_agent import TriageOutput, TriageAgent, ColumnImportance
 from datalumos.agents.utils import run_agent_with_retries
+
 from datalumos.logging import get_logger
-from datalumos.services.postgres import PostgresDB
+from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
-
-# Cache directory for storing analysis results
 _CACHE_DIR: Final = Path.home() / ".datalumos" / "analysis_cache"
 _CACHE_DIR.mkdir(parents=True, exist_ok=True)
 

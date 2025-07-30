@@ -3,7 +3,7 @@ from collections import namedtuple
 import psycopg2
 from psycopg2 import sql
 
-from datalumos.core import DEFAULT_POSTGRES_CONFIG, PostgreSQLConfig
+from datalumos.services.postgres.config import PostgreSQLConfig, DEFAULT_POSTGRES_CONFIG
 
 Column = namedtuple("Column", ["name", "data_type"])
 

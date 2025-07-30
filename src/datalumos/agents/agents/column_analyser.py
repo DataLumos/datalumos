@@ -2,7 +2,7 @@ from agents import Agent, WebSearchTool
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
-from datalumos.agents.tools import get_file_search_tool
+from datalumos.tools.file_search import get_file_search_tool
 from datalumos.agents.utils import load_agent_prompt
 from datalumos.config import config
 

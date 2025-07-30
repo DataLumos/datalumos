@@ -5,7 +5,7 @@ import argparse
 import asyncio
 import sys
 
-from datalumos.agents.flow import AgentConfig, run
+from datalumos.flows.flow import AgentConfig, run
 from datalumos.logging import setup_logging
 
 

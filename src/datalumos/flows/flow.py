@@ -2,14 +2,14 @@ import asyncio
 from dataclasses import dataclass
 
 from agents import set_default_openai_key
-from agents.mcp import MCPServerStdio
 
-from datalumos.agents.assert_validity_flow import run_column_validation
-from datalumos.agents.profile_flow import profile
+from datalumos.flows.subflows.assert_validity import run_column_validation
+from datalumos.MCPs.postgres import postgres_mcp_server
+from datalumos.flows.subflows.table_profiling import profile
 from datalumos.config import config
-from datalumos.core import DEFAULT_POSTGRES_CONFIG
+from datalumos.services.postgres.config import DEFAULT_POSTGRES_CONFIG
 from datalumos.logging import get_logger, setup_logging
-from datalumos.services.postgres import PostgresDB
+from datalumos.services.postgres.connection import PostgresDB
 
 setup_logging()
 logger = get_logger("datalumos")
@@ -38,17 +38,7 @@ async def run(table_name: str, schema: str, config: AgentConfig):
 
     db = PostgresDB(config=config.postgres_config)
 
-    postgres_mcp_params = {
-        "command": "npx",
-        "args": [
-            "-y",
-            "@modelcontextprotocol/server-postgres",
-            config.postgres_config.connection_string,
-            "--access-mode=restricted",
-        ],
-    }
-
-    async with MCPServerStdio(params=postgres_mcp_params) as mcp_server:
+    async with postgres_mcp_server(config) as mcp_server:
 
         table_profile_results = await profile(
             schema=schema, table_name=table_name, db=db, mcp_server=mcp_server

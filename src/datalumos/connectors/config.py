@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from datalumos.core import DEFAULT_POSTGRES_CONFIG
+from datalumos.services.postgres.config import DEFAULT_POSTGRES_CONFIG
 
 
 class ConnectorConfig:
