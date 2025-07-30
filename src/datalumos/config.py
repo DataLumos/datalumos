@@ -22,6 +22,9 @@ class Config:
     DL_DB_PASSWORD: str = os.getenv("DL_DB_PASSWORD", "datalumos123")
     DL_DB_SCHEMA: str = os.getenv("DL_DB_SCHEMA", "public")
 
+    # Logging
+    LOGLEVEL: str = os.getenv("LOGLEVEL", "INFO")
+
 
 # Global config instance
 config = Config()
