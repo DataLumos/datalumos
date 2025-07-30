@@ -1,25 +1,28 @@
 """Main entry point for Data Lumos connectors."""
 
-from typing import Dict, Any, Optional, List
+from typing import Any
+
 import dlt
-from datalumos.connectors.config import config
 import psycopg2
+
+from datalumos.connectors.config import config
 from datalumos.connectors.utils import (
+    extract_source_name,
     logger,
-    validate_source_type,
+    validate_filesystem_config,
     validate_postgres_config,
     validate_s3_config,
-    validate_filesystem_config,
-    extract_source_name,
+    validate_source_type,
 )
 
 
 class DataLoadError(Exception):
     """Custom exception for data loading errors."""
+
     pass
 
 
-def _extract_load_metadata(load_info, pipeline=None) -> Dict[str, Any]:
+def _extract_load_metadata(load_info, pipeline=None) -> dict[str, Any]:
     """Extract metadata from dlt load info."""
     metadata = {
         "total_tables": 0,
@@ -41,7 +44,7 @@ def _extract_load_metadata(load_info, pipeline=None) -> Dict[str, Any]:
                 table_names.extend(package.schema.tables.keys())
 
                 # Try to extract row counts from jobs first
-                if hasattr(package, 'jobs') and package.jobs:
+                if hasattr(package, "jobs") and package.jobs:
                     for job in package.jobs:
                         # Try different ways to get row count
                         rows = 0
@@ -49,18 +52,18 @@ def _extract_load_metadata(load_info, pipeline=None) -> Dict[str, Any]:
                         table_name = "unknown"
 
                         # Get table name
-                        if hasattr(job, 'job_file_info') and job.job_file_info:
+                        if hasattr(job, "job_file_info") and job.job_file_info:
                             table_name = job.job_file_info.table_name or "unknown"
-                            size_bytes = getattr(
-                                job.job_file_info, 'file_size', 0) or 0
+                            size_bytes = getattr(job.job_file_info, "file_size", 0) or 0
 
                         # Try to get row count from job state/metrics
-                        if hasattr(job, '_job_stats') and job._job_stats:
-                            rows = job._job_stats.get('rows', 0)
-                        elif hasattr(job, 'metrics') and job.metrics:
-                            rows = job.metrics.get(
-                                'rows', 0) or job.metrics.get('rows_loaded', 0)
-                        elif hasattr(job, 'state') and hasattr(job.state, 'rows'):
+                        if hasattr(job, "_job_stats") and job._job_stats:
+                            rows = job._job_stats.get("rows", 0)
+                        elif hasattr(job, "metrics") and job.metrics:
+                            rows = job.metrics.get("rows", 0) or job.metrics.get(
+                                "rows_loaded", 0
+                            )
+                        elif hasattr(job, "state") and hasattr(job.state, "rows"):
                             rows = job.state.rows or 0
 
                         metadata["total_rows"] += rows
@@ -68,9 +71,12 @@ def _extract_load_metadata(load_info, pipeline=None) -> Dict[str, Any]:
 
                         # Find or create table detail
                         table_detail = next(
-                            (t for t in metadata["table_details"]
-                             if t["name"] == table_name),
-                            None
+                            (
+                                t
+                                for t in metadata["table_details"]
+                                if t["name"] == table_name
+                            ),
+                            None,
                         )
                         if not table_detail:
                             table_detail = {
@@ -89,29 +95,34 @@ def _extract_load_metadata(load_info, pipeline=None) -> Dict[str, Any]:
         # If no row counts found from dlt jobs, query the database directly
         if metadata["total_rows"] == 0 and pipeline and table_names:
             logger.info(
-                "dlt metadata doesn't contain row counts, querying database directly...")
+                "dlt metadata doesn't contain row counts, querying database directly..."
+            )
             try:
                 db_metadata = _query_database_metadata(pipeline, table_names)
                 metadata.update(db_metadata)
                 logger.info(
-                    f"Retrieved row counts from database: {metadata['total_rows']:,} total rows")
+                    f"Retrieved row counts from database: {metadata['total_rows']:,} total rows"
+                )
             except Exception as e:
                 logger.warning(f"Could not query database for row counts: {e}")
 
         # If still no table details, create basic entries
         if not metadata["table_details"] and table_names:
             for table_name in table_names:
-                metadata["table_details"].append({
-                    "name": table_name,
-                    "rows": 0,  # Will be filled by database query if available
-                    "size_bytes": 0,
-                    "size_mb": 0,
-                    "files_processed": 1,
-                })
+                metadata["table_details"].append(
+                    {
+                        "name": table_name,
+                        "rows": 0,  # Will be filled by database query if available
+                        "size_bytes": 0,
+                        "size_mb": 0,
+                        "files_processed": 1,
+                    }
+                )
 
         # Convert bytes to MB
         metadata["total_size_mb"] = round(
-            metadata["total_size_bytes"] / (1024 * 1024), 2)
+            metadata["total_size_bytes"] / (1024 * 1024), 2
+        )
         for table in metadata["table_details"]:
             table["size_mb"] = round(table["size_bytes"] / (1024 * 1024), 2)
 
@@ -121,14 +132,10 @@ def _extract_load_metadata(load_info, pipeline=None) -> Dict[str, Any]:
     return metadata
 
 
-def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]:
+def _query_database_metadata(pipeline, table_names: list[str]) -> dict[str, Any]:
     """Query the database directly to get row counts and sizes."""
 
-    metadata = {
-        "total_rows": 0,
-        "total_size_bytes": 0,
-        "table_details": []
-    }
+    metadata = {"total_rows": 0, "total_size_bytes": 0, "table_details": []}
 
     try:
         # Get database connection info
@@ -144,18 +151,19 @@ def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]
             for table_name in table_names:
                 try:
                     # Query row count
-                    cursor.execute(
-                        f"SELECT COUNT(*) FROM {dataset_name}.{table_name}"
-                    )
+                    cursor.execute(f"SELECT COUNT(*) FROM {dataset_name}.{table_name}")
                     row_count = cursor.fetchone()[0]
 
                     # Query table size (approximate)
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT pg_total_relation_size(c.oid) as size_bytes
                         FROM pg_class c
                         JOIN pg_namespace n ON n.oid = c.relnamespace
                         WHERE c.relname = %s AND n.nspname = %s
-                    """, (table_name, dataset_name))
+                    """,
+                        (table_name, dataset_name),
+                    )
 
                     size_result = cursor.fetchone()
                     size_bytes = size_result[0] if size_result else 0
@@ -165,9 +173,12 @@ def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]
 
                     # Update or create table detail
                     table_detail = next(
-                        (t for t in metadata["table_details"]
-                         if t["name"] == table_name),
-                        None
+                        (
+                            t
+                            for t in metadata["table_details"]
+                            if t["name"] == table_name
+                        ),
+                        None,
                     )
                     if not table_detail:
                         table_detail = {
@@ -184,7 +195,8 @@ def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]
 
                 except Exception as e:
                     logger.warning(
-                        f"Could not query metadata for table {table_name}: {e}")
+                        f"Could not query metadata for table {table_name}: {e}"
+                    )
                     continue
 
         conn.close()
@@ -198,11 +210,11 @@ def _query_database_metadata(pipeline, table_names: List[str]) -> Dict[str, Any]
 
 def load_data(
     source_type: str,
-    source_config: Dict[str, Any],
-    dataset_name: Optional[str] = None,
-    pipeline_name: Optional[str] = None,
-    table_name: Optional[str] = None,
-) -> Dict[str, Any]:
+    source_config: dict[str, Any],
+    dataset_name: str | None = None,
+    pipeline_name: str | None = None,
+    table_name: str | None = None,
+) -> dict[str, Any]:
     """
     Load data from various sources into local PostgreSQL database.
 
@@ -236,8 +248,7 @@ def load_data(
         if not pipeline_name:
             pipeline_name = config.get_pipeline_name(source_type, source_name)
 
-        logger.info(
-            f"Using pipeline: {pipeline_name}, dataset: {dataset_name}")
+        logger.info(f"Using pipeline: {pipeline_name}, dataset: {dataset_name}")
 
         # Create the appropriate source
         source = _create_source(source_type, source_config, table_name)
@@ -251,20 +262,19 @@ def load_data(
         pipeline = dlt.pipeline(
             pipeline_name=pipeline_name,
             destination=dest_config["destination"],
-            dataset_name=dataset_name
+            dataset_name=dataset_name,
         )
 
         logger.info("Starting data extraction and load...")
 
         # Run the pipeline with credentials
-        load_info = pipeline.run(
-            source, credentials=dest_config["credentials"])
+        load_info = pipeline.run(source, credentials=dest_config["credentials"])
 
         # Extract detailed metadata
         metadata = _extract_load_metadata(load_info, pipeline)
 
         # Log results
-        logger.info(f"Load completed successfully!")
+        logger.info("Load completed successfully!")
         logger.info(f"Tables created: {metadata['total_tables']}")
         logger.info(f"Total rows: {metadata['total_rows']:,}")
         logger.info(f"Total size: {metadata['total_size_mb']:.2f} MB")
@@ -293,12 +303,12 @@ def load_data(
         return result
 
     except Exception as e:
-        error_msg = f"Failed to load data from {source_type}: {str(e)}"
+        error_msg = f"Failed to load data from {source_type}: {e!s}"
         logger.error(error_msg)
         raise DataLoadError(error_msg) from e
 
 
-def _validate_source_config(source_type: str, source_config: Dict[str, Any]) -> None:
+def _validate_source_config(source_type: str, source_config: dict[str, Any]) -> None:
     """Validate source configuration based on source type."""
     validators = {
         "postgres": validate_postgres_config,
@@ -311,25 +321,32 @@ def _validate_source_config(source_type: str, source_config: Dict[str, Any]) -> 
         validator(source_config)
 
 
-def _create_source(source_type: str, source_config: Dict[str, Any], table_name: Optional[str] = None):
+def _create_source(
+    source_type: str, source_config: dict[str, Any], table_name: str | None = None
+):
     """Create the appropriate dlt source based on source type."""
     if source_type == "postgres":
         from datalumos.connectors.sources.postgres_source import create_postgres_source
+
         return create_postgres_source(source_config, table_name)
 
     elif source_type == "s3":
         from datalumos.connectors.sources.s3_source import create_s3_source
+
         return create_s3_source(source_config, table_name)
 
     elif source_type == "filesystem":
-        from datalumos.connectors.sources.filesystem_source import create_filesystem_source
+        from datalumos.connectors.sources.filesystem_source import (
+            create_filesystem_source,
+        )
+
         return create_filesystem_source(source_config, table_name)
 
     else:
         raise ValueError(f"Unknown source type: {source_type}")
 
 
-def get_pipeline_info(pipeline_name: str) -> Optional[Dict[str, Any]]:
+def get_pipeline_info(pipeline_name: str) -> dict[str, Any] | None:
     """Get information about an existing pipeline."""
     try:
         pipeline = dlt.pipeline(pipeline_name)
@@ -340,16 +357,16 @@ def get_pipeline_info(pipeline_name: str) -> Optional[Dict[str, Any]]:
             "last_load_info": pipeline.last_load_info,
         }
     except Exception as e:
-        logger.warning(
-            f"Could not retrieve pipeline info for {pipeline_name}: {e}")
+        logger.warning(f"Could not retrieve pipeline info for {pipeline_name}: {e}")
         return None
 
 
-def save_load_metadata(pipeline_name: str, metadata: Dict[str, Any]) -> None:
+def save_load_metadata(pipeline_name: str, metadata: dict[str, Any]) -> None:
     """Save load metadata to a metadata table in PostgreSQL."""
     try:
-        import dlt
         from datetime import datetime
+
+        import dlt
 
         # Create a simple metadata record
         metadata_record = {
@@ -373,12 +390,11 @@ def save_load_metadata(pipeline_name: str, metadata: Dict[str, Any]) -> None:
         metadata_pipeline = dlt.pipeline(
             pipeline_name="datalumos_metadata",
             destination=dest_config["destination"],
-            dataset_name="datalumos_meta"
+            dataset_name="datalumos_meta",
         )
 
         # Save metadata
-        metadata_pipeline.run(
-            load_metadata(), credentials=dest_config["credentials"])
+        metadata_pipeline.run(load_metadata(), credentials=dest_config["credentials"])
         logger.info("Load metadata saved successfully")
 
     except Exception as e:

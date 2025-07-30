@@ -1,15 +1,17 @@
-
 import logging
-import os
+
 from rich.logging import RichHandler
+
+from datalumos.config import config
 
 
 def setup_logging():
     logging.basicConfig(
-        level=os.getenv("LOGLEVEL", "INFO"),
+        level=config.LOGLEVEL,
         format="%(message)s",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger instance"""
@@ -20,7 +22,7 @@ def setup_output_logger() -> logging.Logger:
     """Set up a separate logger for formatted analysis outputs"""
     output_logger = logging.getLogger("datalumos.output")
     output_handler = logging.StreamHandler()
-    output_handler.setFormatter(logging.Formatter('%(message)s'))
+    output_handler.setFormatter(logging.Formatter("%(message)s"))
     output_logger.addHandler(output_handler)
     output_logger.propagate = False
     return output_logger
