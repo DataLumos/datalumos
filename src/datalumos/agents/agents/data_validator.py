@@ -4,9 +4,9 @@ from agents import Agent
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
-from datalumos.tools.file_search import get_file_search_tool
 from datalumos.agents.utils import load_agent_prompt
 from datalumos.config import config
+from datalumos.tools.file_search import get_file_search_tool
 
 NAME = "Data Validator"
 
@@ -17,22 +17,10 @@ class DataValidatorAgent(Agent):
     def __init__(
         self,
         mcp_servers: list[MCPServerStdio],
-        column_name: str,
-        table_context: str,
-        table_name: str,
-        schema_name: str,
-        input_format: str,
     ):
-
         super().__init__(
             name=NAME,
-            # TODO: Move this formatting in the load_agent_prompt
-            instructions=load_agent_prompt(NAME).format(
-                input_format=input_format,
-                table_name=table_name,
-                schema_name=schema_name,
-                table_context=table_context,
-            ),
+            instructions=load_agent_prompt(NAME),
             output_type=DataValidatorOutput,
             tools=get_file_search_tool(),
             mcp_servers=mcp_servers,
@@ -50,9 +38,7 @@ class Severity(str, Enum):
 class SampleViolation(BaseModel):
     """Individual violation example"""
 
-    invalid_value: str = Field(
-        description="The problematic value that violates the rule"
-    )
+    invalid_value: str = Field(description="The problematic value that violates the rule")
 
 
 class ValidationResults(BaseModel):
@@ -86,8 +72,8 @@ class ColumnValidation(BaseModel):
 
     column_name: str
     column_type: str = Field(description="Data type of the column")
-    rules_validated: list[RuleValidation] = Field(
-        default_factory=list, description="All validation rules applied to this column"
+    quality_checks: list[RuleValidation] = Field(
+        default_factory=list, description="All quality rules applied to this column"
     )
 
 

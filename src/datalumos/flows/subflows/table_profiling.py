@@ -6,39 +6,52 @@ to understand the business meaning and context behind tables and columns:
 
 1. **Table Context Discovery**: Understands what the table represents in business terms
 2. **Column Semantic Analysis**: Investigates the meaning and purpose of each column
-3. **Column Importance Triage**: Prioritizes columns by business value for downstream processing
+3. **Column Importance Triage**: Prioritizes columns by business value for downstream
+processing.
 
 All analysis results are cached to enable efficient reuse across multiple workflows.
 """
+
 import asyncio
-from pathlib import Path
-from typing import Final
 
 from agents import Runner
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
-from datalumos.agents.agents.column_analyser import ColumnAnalysisOutput, ColumnAnalyserAgent
-from datalumos.agents.agents.data_explorer import TableAnalysisOutput, DataExplorerAgent
-from datalumos.agents.agents.triage_agent import TriageOutput, TriageAgent, ColumnImportance
+from datalumos.agents.agents.column_analyser import (
+    ColumnAnalyserAgent,
+    ColumnAnalysisOutput,
+)
+from datalumos.agents.agents.data_explorer import DataExplorerAgent, TableAnalysisOutput
+from datalumos.agents.agents.triage_agent import (
+    ColumnImportance,
+    TriageAgent,
+    TriageOutput,
+)
 from datalumos.agents.utils import run_agent_with_retries
-
+from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.logging import get_logger
+from datalumos.logging_utils import log_step_complete, log_step_start, log_summary
 from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
-_CACHE_DIR: Final = Path.home() / ".datalumos" / "analysis_cache"
-_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class TableAnalysisResults(BaseModel):
-    """Complete profiling results containing table context, column semantics, and prioritization."""
+    """
+    Complete profiling results containing table context, column semantics, and
+    prioritization.
+    """
 
     table_context: TableAnalysisOutput = Field(description="Table business context")
     column_analyses: list[ColumnAnalysisOutput] = Field(
         description="Detailed analysis for each column"
     )
     column_triage: TriageOutput = Field(description="Column prioritization results")
+
+
+# Cache manager for analysis results
+_cache_manager = CacheManager("analysis_cache", "analysis", TableAnalysisResults)
 
 
 async def profile(
@@ -70,12 +83,12 @@ async def profile(
     logger.info(f"Starting analysis for {schema}.{table_name}")
 
     if not force_refresh:
-        cached_results = _load_cached_results(schema, table_name)
+        cached_results = _cache_manager.load_cached_results(schema, table_name)
         if cached_results:
             logger.info(f"Using cached results for {schema}.{table_name}")
             return cached_results
 
-    logger.info("Getting table context...")
+    log_step_start("Getting table context", f"{schema}.{table_name}")
     table_context = await _get_table_context(
         schema=schema,
         table=table_name,
@@ -83,8 +96,9 @@ async def profile(
         mcp_server=mcp_server,
         force_refresh=force_refresh,
     )
+    log_step_complete("Table context analysis")
 
-    logger.info("Step 2: Analyzing columns...")
+    log_step_start("Analyzing columns", f"{schema}.{table_name}")
     column_analyses = await _analyze_columns(
         schema=schema,
         table_name=table_name,
@@ -92,8 +106,9 @@ async def profile(
         db=db,
         mcp_server=mcp_server,
     )
+    log_step_complete("Column analysis", len(column_analyses))
 
-    logger.info("Step 3: Triaging columns...")
+    log_step_start("Triaging columns", f"{schema}.{table_name}")
     column_triage = await _triage_columns(
         schema=schema,
         table_name=table_name,
@@ -102,6 +117,7 @@ async def profile(
         mcp_server=mcp_server,
         column_analyses=column_analyses,
     )
+    log_step_complete("Column triage")
 
     results = TableAnalysisResults(
         table_context=table_context,
@@ -109,8 +125,22 @@ async def profile(
         column_triage=column_triage,
     )
 
-    _save_cached_results(schema, table_name, results)
-    logger.info(f"Analysis complete for {schema}.{table_name}")
+    _cache_manager.save_cached_results(schema, table_name, results)
+
+    # Log profiling summary
+    high_priority_cols = [
+        c
+        for c in results.column_triage.column_classifications
+        if c.classification.value == "HIGH"
+    ]
+    log_summary(
+        "Profiling Complete",
+        {
+            "Total columns analyzed": len(column_analyses),
+            "High priority columns": len(high_priority_cols),
+            "Table context": "✓ Complete",
+        },
+    )
 
     return results
 
@@ -146,11 +176,12 @@ async def _analyze_columns(
         async with semaphore:
             analyzer = ColumnAnalyserAgent(
                 mcp_servers=[mcp_server],
-                column_name=column.name,
-                table_context=table_context.table_description,
             )
 
-            question = f"Analyze {column.name} column of type {column.data_type} in table {table_name}"
+            question = (
+                f"Analyze {column.name} column of type {column.data_type} "
+                f"in table {table_name}. Table context: {table_context.table_description}"
+            )
 
             result = await run_agent_with_retries(
                 fn=Runner.run, agent=analyzer, question=question
@@ -185,7 +216,8 @@ async def _triage_columns(
 
     result = await Runner.run(triage_agent, question)
     logger.info(
-        f"Column triage complete for {schema}.{table_name}. Column analyses: {column_analyses}"
+        f"Column triage complete for {schema}.{table_name}. "
+        f"Column analyses: {column_analyses}"
     )
 
     return result.final_output
@@ -198,31 +230,3 @@ def get_high_priority_columns(results: TableAnalysisResults) -> list[tuple[str, 
         for c in results.column_triage.column_classifications
         if c.classification == ColumnImportance.HIGH
     ]
-
-
-def _cache_file_path(schema: str, table_name: str) -> Path:
-    """Get cache file path for table analysis results."""
-    return _CACHE_DIR / f"{schema}.{table_name}.analysis.json"
-
-
-def _load_cached_results(schema: str, table_name: str) -> TableAnalysisResults | None:
-    """Load cached analysis results if they exist."""
-    cache_file = _cache_file_path(schema, table_name)
-    if cache_file.exists():
-        try:
-            return TableAnalysisResults.model_validate_json(cache_file.read_text())
-        except Exception as e:
-            logger.warning(f"Failed to load cached results: {e}")
-    return None
-
-
-def _save_cached_results(
-    schema: str, table_name: str, results: TableAnalysisResults
-) -> None:
-    """Save analysis results to cache."""
-    cache_file = _cache_file_path(schema, table_name)
-    try:
-        cache_file.write_text(results.model_dump_json(indent=2))
-        logger.info(f"Results cached to {cache_file}")
-    except Exception as e:
-        logger.warning(f"Failed to cache results: {e}")

@@ -1,14 +1,14 @@
-import asyncio
 from dataclasses import dataclass
 
 from agents import set_default_openai_key
 
-from datalumos.flows.subflows.assert_validity import run_column_validation
-from datalumos.MCPs.postgres import postgres_mcp_server
-from datalumos.flows.subflows.table_profiling import profile
 from datalumos.config import config
-from datalumos.services.postgres.config import DEFAULT_POSTGRES_CONFIG
+from datalumos.flows.subflows.assert_accuracy import run_accuracy_flow
+from datalumos.flows.subflows.assert_validity import run_column_validation
+from datalumos.flows.subflows.table_profiling import profile
 from datalumos.logging import get_logger, setup_logging
+from datalumos.MCPs.postgres import postgres_mcp_server
+from datalumos.services.postgres.config import DEFAULT_POSTGRES_CONFIG
 from datalumos.services.postgres.connection import PostgresDB
 
 setup_logging()
@@ -39,30 +39,30 @@ async def run(table_name: str, schema: str, config: AgentConfig):
     db = PostgresDB(config=config.postgres_config)
 
     async with postgres_mcp_server(config) as mcp_server:
-
         table_profile_results = await profile(
-            schema=schema, table_name=table_name, db=db, mcp_server=mcp_server
+            schema=schema,
+            table_name=table_name,
+            db=db,
+            mcp_server=mcp_server,
+            force_refresh=False,
         )
 
         columns = db.get_column_names(table=table_name, schema=schema)
 
-        validation_results = await run_column_validation(
+        await run_column_validation(
             table_profile_results=table_profile_results,
             columns=columns,
             schema=schema,
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
+            force_refresh=False,
         )
 
-        return table_profile_results, validation_results
-
-
-if __name__ == "__main__":
-
-    async def main():
-        await run(
-            schema="datalumos", table_name="dtdc_curier", config=AgentConfig.from_env()
+        await run_accuracy_flow(
+            table_profile_results=table_profile_results,
+            schema=schema,
+            table_name=table_name,
+            db=db,
+            force_refresh=False,
         )
-
-    asyncio.run(main())

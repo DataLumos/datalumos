@@ -12,6 +12,10 @@ def setup_logging():
         handlers=[RichHandler(rich_tracebacks=True)],
     )
 
+    # Suppress OpenAI HTTP request logs
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("openai").setLevel(logging.WARNING)
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger instance"""

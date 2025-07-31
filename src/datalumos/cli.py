@@ -54,12 +54,7 @@ def main():
         print(f"📋 Table: {args.schema_name}.{args.table_name}")
 
         config = AgentConfig.from_env()
-        table_profile_results, validation_results = asyncio.run(
-            run(schema=args.schema_name, table_name=args.table_name, config=config)
-        )
-        print(table_profile_results)
-        print(validation_results)
-
+        asyncio.run(run(schema=args.schema_name, table_name=args.table_name, config=config))
         print("✅ Analysis completed successfully.")
         langfuse.flush()
 
