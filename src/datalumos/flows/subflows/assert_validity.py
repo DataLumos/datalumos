@@ -19,7 +19,10 @@ from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
 from datalumos.agents.agents.column_analyser import ColumnAnalysisOutput
-from datalumos.agents.agents.data_validator import DataValidatorAgent, DataValidatorOutput
+from datalumos.agents.agents.data_validator import (
+    DataValidatorAgent,
+    DataValidatorOutput,
+)
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.flows.subflows.table_profiling import TableAnalysisResults
 from datalumos.logging import get_logger

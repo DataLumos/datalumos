@@ -25,7 +25,11 @@ from datalumos.agents.agents.column_analyser import (
     ColumnAnalysisOutput,
 )
 from datalumos.agents.agents.data_explorer import DataExplorerAgent, TableAnalysisOutput
-from datalumos.agents.agents.triage_agent import ColumnImportance, TriageAgent, TriageOutput
+from datalumos.agents.agents.triage_agent import (
+    ColumnImportance,
+    TriageAgent,
+    TriageOutput,
+)
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.logging import get_logger
 from datalumos.logging_utils import log_step_complete, log_step_start, log_summary
