@@ -43,6 +43,8 @@ dependencies = [
     "openai>=1.0.0",
     "ruff>=0.12.5",
     "black>=25.1.0",
+    "pydantic-ai[logfire]>=0.4.10",
+    "langfuse>=3.2.1",
 ]
 
 [project.optional-dependencies]

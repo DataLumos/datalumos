@@ -1,5 +1,5 @@
 """Centralized configuration for DataLumos with environment variable support."""
-
+import base64
 import os
 
 from dotenv import load_dotenv
@@ -25,6 +25,28 @@ class Config:
     # Logging
     LOGLEVEL: str = os.getenv("LOGLEVEL", "INFO")
 
+    # Observability
+    LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
+    LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
+    LANGFUSE_HOST: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+
+    LANGFUSE_AUTH = base64.b64encode(
+        f"{LANGFUSE_PUBLIC_KEY}:{LANGFUSE_SECRET_KEY}".encode()
+    ).decode()
+    OTEL_EXPORTER_OTLP_ENDPOINT = f"{LANGFUSE_HOST}/api/public/otel"
+    OTEL_EXPORTER_OTLP_HEADERS = f"Authorization=Basic {LANGFUSE_AUTH}"
 
 # Global config instance
 config = Config()
+# Get keys for your project from the project settings page: https://cloud.langfuse.com
+os.environ["LANGFUSE_PUBLIC_KEY"] = config.LANGFUSE_PUBLIC_KEY
+os.environ["LANGFUSE_SECRET_KEY"] = config.LANGFUSE_SECRET_KEY
+os.environ["LANGFUSE_HOST"] = config.LANGFUSE_HOST
+
+# Build Basic Auth header.
+LANGFUSE_AUTH = config.LANGFUSE_AUTH
+
+# Configure OpenTelemetry endpoint & headers
+os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = config.OTEL_EXPORTER_OTLP_ENDPOINT
+os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = config.OTEL_EXPORTER_OTLP_HEADERS
+
