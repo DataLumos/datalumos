@@ -161,7 +161,7 @@ async def _check_text_accuracy(
             question=(
                 f"Check accuracy of {column}. "
                 f"Context: {analysis.business_definition}. "
-                f"Values: {values}"
+                f"Assess the accuracy of the following distinct values: {values}. "
             ),
         )
         log_column_result(column, "text accuracy", result.final_output)

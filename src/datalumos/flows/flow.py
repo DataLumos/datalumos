@@ -44,7 +44,7 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=False,
+            force_refresh=True,
         )
 
         columns = db.get_column_names(table=table_name, schema=schema)
@@ -56,7 +56,7 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=False,
+            force_refresh=True,
         )
 
         await run_accuracy_flow(
@@ -64,5 +64,5 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             schema=schema,
             table_name=table_name,
             db=db,
-            force_refresh=False,
+            force_refresh=True,
         )

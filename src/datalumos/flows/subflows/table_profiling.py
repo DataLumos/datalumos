@@ -35,7 +35,6 @@ from datalumos.logging_utils import (
     log_column_result,
     log_step_complete,
     log_step_start,
-    log_summary,
 )
 from datalumos.services.postgres.connection import PostgresDB
 
@@ -111,7 +110,6 @@ async def profile(
         db=db,
         mcp_server=mcp_server,
     )
-    log_step_complete("Column analysis", len(column_analyses))
 
     log_step_start("Triaging columns", f"{schema}.{table_name}")
     column_triage = await _triage_columns(
@@ -131,21 +129,6 @@ async def profile(
     )
 
     _cache_manager.save_cached_results(schema, table_name, results)
-
-    # Log profiling summary
-    high_priority_cols = [
-        c
-        for c in results.column_triage.column_classifications
-        if c.classification.value == "HIGH"
-    ]
-    log_summary(
-        "Profiling Complete",
-        {
-            "Total columns analyzed": len(column_analyses),
-            "High priority columns": len(high_priority_cols),
-            "Table context": "✓ Complete",
-        },
-    )
 
     return results
 
@@ -183,10 +166,17 @@ async def _analyze_columns(
             analyzer = ColumnAnalyserAgent(
                 mcp_servers=[mcp_server],
             )
-
+            sample_values = db.get_sample_values(
+                table=table_name,
+                schema=schema,
+                column=column.name,
+                limit=5,
+            )
             question = (
-                f"Analyze {column.name} column of type {column.data_type} "
-                f"in table {table_name}. Table context: {table_context.table_description}"
+                f"Analyze '{column.name}' column of type '{column.data_type}' "
+                f"in table '{table_name}'. "
+                f"\nTable context: \n'{table_context.table_description}'. "
+                f"\nSample values: \n'{sample_values}'. "
             )
 
             result = await run_agent_with_retries(
@@ -222,10 +212,7 @@ async def _triage_columns(
     )
 
     result = await Runner.run(triage_agent, question)
-    logger.info(
-        f"Column triage complete for {schema}.{table_name}. "
-        f"Column analyses: {column_analyses}"
-    )
+    log_column_result(table_name, "triage", result.final_output)
 
     return result.final_output
 
