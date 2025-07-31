@@ -22,8 +22,7 @@ If you still need clarification after web searching, you can query the table to 
 Based on your analysis, provide the following outputs:
 
 1. <table_description>
-   Write a clear explanation of what the table represents.
-C  an you determine the geographic area this dataset comes from? If so, include this information in the description, as geographic context is important for proper data interpretation.
+Write a clear explanation of what the table represents.
 </table_description>
 
 
