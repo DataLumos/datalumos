@@ -38,13 +38,6 @@ class Config:
 
 # Global config instance
 config = Config()
-# Get keys for your project from the project settings page: https://cloud.langfuse.com
-os.environ["LANGFUSE_PUBLIC_KEY"] = config.LANGFUSE_PUBLIC_KEY
-os.environ["LANGFUSE_SECRET_KEY"] = config.LANGFUSE_SECRET_KEY
-os.environ["LANGFUSE_HOST"] = config.LANGFUSE_HOST
-
-# Build Basic Auth header.
-LANGFUSE_AUTH = config.LANGFUSE_AUTH
 
 # Configure OpenTelemetry endpoint & headers
 os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = config.OTEL_EXPORTER_OTLP_ENDPOINT
