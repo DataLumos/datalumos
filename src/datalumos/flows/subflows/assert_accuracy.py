@@ -12,10 +12,6 @@ import asyncio
 from agents import Runner
 from pydantic import BaseModel, Field
 
-from datalumos.agents.agents.categorical_accuracy_checker import (
-    CategoricalAccuracyCheckerAgent,
-    CategoricalAccuracyOutput,
-)
 from datalumos.agents.agents.column_analyser import ColumnAnalysisOutput
 from datalumos.agents.agents.date_accuracy_checker import (
     DateAccuracyCheckerAgent,
@@ -25,6 +21,10 @@ from datalumos.agents.agents.numerical_accuracy_checker import (
     NumericalAccuracyCheckerAgent,
     NumericalAccuracyOutput,
 )
+from datalumos.agents.agents.text_accuracy_checker import (
+    TextAccuracyCheckerAgent,
+    TextAccuracyOutput,
+)
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.flows.subflows.table_profiling import TableAnalysisResults
@@ -32,14 +32,13 @@ from datalumos.logging import get_logger
 from datalumos.logging_utils import (
     log_column_result,
     log_step_start,
-    log_summary,
 )
 from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
 
 # Configuration
-DISTINCT_VALUES_THRESHOLD = 100
+DISTINCT_VALUES_THRESHOLD = 50
 SAMPLE_SIZE = 20
 MAX_CONCURRENT_CHECKS = 3
 
@@ -47,7 +46,7 @@ MAX_CONCURRENT_CHECKS = 3
 class AccuracyResults(BaseModel):
     """Complete accuracy results for table columns."""
 
-    categorical_accuracy: list[CategoricalAccuracyOutput] = Field(default_factory=list)
+    text_accuracy: list[TextAccuracyOutput] = Field(default_factory=list)
     numerical_accuracy: list[NumericalAccuracyOutput] = Field(default_factory=list)
     date_accuracy: list[DateAccuracyOutput] = Field(default_factory=list)
 
@@ -77,18 +76,6 @@ async def run_accuracy_flow(
 
     _cache_manager.save_cached_results(schema, table_name, results)
 
-    log_summary(
-        "Accuracy Validation Complete",
-        {
-            "Text/Categorical columns": len(results.categorical_accuracy),
-            "Numerical columns": len(results.numerical_accuracy),
-            "Date/Time columns": len(results.date_accuracy),
-            "Total columns checked": len(results.categorical_accuracy)
-            + len(results.numerical_accuracy)
-            + len(results.date_accuracy),
-        },
-    )
-
     return results
 
 
@@ -109,9 +96,7 @@ async def _run_all_accuracy_checks(
     results = await asyncio.gather(*tasks)
 
     return AccuracyResults(
-        categorical_accuracy=[
-            r for r in results if isinstance(r, CategoricalAccuracyOutput)
-        ],
+        text_accuracy=[r for r in results if isinstance(r, TextAccuracyOutput)],
         numerical_accuracy=[r for r in results if isinstance(r, NumericalAccuracyOutput)],
         date_accuracy=[r for r in results if isinstance(r, DateAccuracyOutput)],
     )
@@ -123,7 +108,7 @@ async def _dispatch_column_check(
     table_name: str,
     schema: str,
     semaphore: asyncio.Semaphore,
-) -> CategoricalAccuracyOutput | NumericalAccuracyOutput | DateAccuracyOutput | None:
+) -> TextAccuracyOutput | NumericalAccuracyOutput | DateAccuracyOutput | None:
     """Simple dispatcher: one column -> one accuracy check based on type."""
     column = analysis.column_name
 
@@ -155,7 +140,7 @@ async def _check_text_accuracy(
     table_name: str,
     schema: str,
     semaphore: asyncio.Semaphore,
-) -> CategoricalAccuracyOutput | None:
+) -> TextAccuracyOutput | None:
     """Check text column accuracy with sampling logic."""
     distinct_count = await asyncio.to_thread(
         db.get_count_distinct_values, column, table_name, schema
@@ -169,7 +154,7 @@ async def _check_text_accuracy(
         )
 
     async with semaphore:
-        agent = CategoricalAccuracyCheckerAgent()
+        agent = TextAccuracyCheckerAgent()
         result = await run_agent_with_retries(
             fn=Runner.run,
             agent=agent,

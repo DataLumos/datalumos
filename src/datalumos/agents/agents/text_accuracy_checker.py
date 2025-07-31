@@ -5,10 +5,10 @@ from datalumos.agents.utils import load_agent_prompt
 from datalumos.config import config
 from datalumos.tools.file_search import get_file_search_tool
 
-NAME = "Categorical Accuracy Checker"
+NAME = "Text Accuracy Checker"
 
 
-class CategoricalAccuracyOutput(BaseModel):
+class TextAccuracyOutput(BaseModel):
     """Structured output for checking categorical accuracy of column values."""
 
     column_name: str = Field(..., description="Name of the column being analyzed")
@@ -33,7 +33,7 @@ class CategoricalAccuracyOutput(BaseModel):
     )
 
 
-class CategoricalAccuracyCheckerAgent(Agent):
+class TextAccuracyCheckerAgent(Agent):
     """
     Agent to assess categorical accuracy of column values based on real-world
     categories."""
@@ -49,7 +49,7 @@ class CategoricalAccuracyCheckerAgent(Agent):
         super().__init__(
             name=NAME,
             instructions=instructions,
-            output_type=CategoricalAccuracyOutput,
+            output_type=TextAccuracyOutput,
             tools=tools,
             model=config.OPENAI_API_MODEL,
         )
