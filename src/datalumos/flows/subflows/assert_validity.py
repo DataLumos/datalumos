@@ -125,7 +125,11 @@ async def _validate_columns(
 
             validation_prompt = (
                 f"Validate {column.name} column in the table {schema}.{table_name} "
-                f"Column analysis output: {column_analysis}"
+                f"\n Column name: {column.name}. "
+                f"\n Column description: {column_analysis.column_description}. "
+                f"\n Column data type: {column_analysis.data_type}. "
+                f"\n Column tech specs: {column_analysis.technical_specification}. "
+                f"\n You must execute the validation queries"
             )
 
             result = await run_agent_with_retries(
