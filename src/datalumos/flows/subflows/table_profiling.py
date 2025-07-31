@@ -175,13 +175,11 @@ async def _analyze_columns(
         async with semaphore:
             analyzer = ColumnAnalyserAgent(
                 mcp_servers=[mcp_server],
-                column_name=column.name,
-                table_context=table_context.table_description,
             )
 
             question = (
                 f"Analyze {column.name} column of type {column.data_type} "
-                f"in table {table_name}"
+                f"in table {table_name}. Table context: {table_context.table_description}"
             )
 
             result = await run_agent_with_retries(

@@ -18,7 +18,6 @@ from agents import Runner
 from agents.mcp import MCPServerStdio
 from pydantic import BaseModel, Field
 
-from datalumos.agents.agents.column_analyser import ColumnAnalysisOutput
 from datalumos.agents.agents.data_validator import (
     DataValidatorAgent,
     DataValidatorOutput,
@@ -50,7 +49,7 @@ class ValidationResults(BaseModel):
 
 async def run_column_validation(
     table_profile_results: TableAnalysisResults,
-    columns: list[str],
+    columns: list[Column],
     schema: str,
     table_name: str,
     db: PostgresDB,
@@ -96,17 +95,14 @@ async def run_column_validation(
 
     _save_cached_results(schema, table_name, results)
 
-    log_summary(
-        "Validation Complete",
-        {"Columns validated": len(column_validations), "Results cached": "✓"},
-    )
+    log_summary("Validation Complete")
 
     return results
 
 
 async def _validate_columns(
     table_profile_results: TableAnalysisResults,
-    columns: list[str],
+    columns: list[Column],
     schema: str,
     table_name: str,
     mcp_server: MCPServerStdio,
@@ -130,16 +126,12 @@ async def _validate_columns(
                 return None
 
             validator = DataValidatorAgent(
-                table_name=table_name,
-                schema_name=schema,
                 mcp_servers=[mcp_server],
-                input_format=str(ColumnAnalysisOutput.describe()),
-                column_name=column.name,
-                table_context=table_profile_results.table_context.table_description,
             )
 
             validation_prompt = (
-                f"Validate {column.name} column. Column analysis output: {column_analysis}"
+                f"Validate {column.name} column in the table {schema}.{table_name} "
+                f"Column analysis output: {column_analysis}"
             )
 
             result = await run_agent_with_retries(
