@@ -8,8 +8,6 @@ Simple dispatcher logic: one column -> one accuracy check based on column type.
 """
 
 import asyncio
-from pathlib import Path
-from typing import Final
 
 from agents import Runner
 from pydantic import BaseModel, Field
@@ -28,6 +26,7 @@ from datalumos.agents.agents.numerical_accuracy_checker import (
     NumericalAccuracyOutput,
 )
 from datalumos.agents.utils import run_agent_with_retries
+from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.flows.subflows.table_profiling import TableAnalysisResults
 from datalumos.logging import get_logger
 from datalumos.logging_utils import (
@@ -40,8 +39,6 @@ from datalumos.services.postgres.connection import PostgresDB
 logger = get_logger(__name__)
 
 # Configuration
-_CACHE_DIR: Final = Path.home() / ".datalumos" / "accuracy_cache"
-_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DISTINCT_VALUES_THRESHOLD = 100
 SAMPLE_SIZE = 20
 MAX_CONCURRENT_CHECKS = 3
@@ -53,6 +50,10 @@ class AccuracyResults(BaseModel):
     categorical_accuracy: list[CategoricalAccuracyOutput] = Field(default_factory=list)
     numerical_accuracy: list[NumericalAccuracyOutput] = Field(default_factory=list)
     date_accuracy: list[DateAccuracyOutput] = Field(default_factory=list)
+
+
+# Cache manager for accuracy results
+_cache_manager = CacheManager("accuracy_cache", "accuracy", AccuracyResults)
 
 
 async def run_accuracy_flow(
@@ -67,14 +68,14 @@ async def run_accuracy_flow(
     log_step_start("Accuracy validation", f"{schema}.{table_name}")
 
     if not force_refresh:
-        cached_results = _load_cached_results(schema, table_name)
+        cached_results = _cache_manager.load_cached_results(schema, table_name)
         if cached_results:
             logger.info(f"Using cached accuracy results for {schema}.{table_name}")
             return cached_results
 
     results = await _run_all_accuracy_checks(table_profile_results, schema, table_name, db)
 
-    _save_cached_results(schema, table_name, results)
+    _cache_manager.save_cached_results(schema, table_name, results)
 
     log_summary(
         "Accuracy Validation Complete",
@@ -236,29 +237,3 @@ async def _check_date_accuracy(
         )
         log_column_result(column, "date accuracy", result.final_output)
         return result.final_output
-
-
-def _cache_file_path(schema: str, table_name: str) -> Path:
-    """Get cache file path for accuracy results."""
-    return _CACHE_DIR / f"{schema}.{table_name}.accuracy.json"
-
-
-def _load_cached_results(schema: str, table_name: str) -> AccuracyResults | None:
-    """Load cached accuracy results if they exist."""
-    cache_file = _cache_file_path(schema, table_name)
-    if cache_file.exists():
-        try:
-            return AccuracyResults.model_validate_json(cache_file.read_text())
-        except Exception as e:
-            logger.warning(f"Failed to load cached accuracy results: {e}")
-    return None
-
-
-def _save_cached_results(schema: str, table_name: str, results: AccuracyResults) -> None:
-    """Save accuracy results to cache."""
-    cache_file = _cache_file_path(schema, table_name)
-    try:
-        cache_file.write_text(results.model_dump_json(indent=2))
-        logger.info(f"Accuracy results cached to {cache_file}")
-    except Exception as e:
-        logger.warning(f"Failed to cache accuracy results: {e}")

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from agents import set_default_openai_key
 
 from datalumos.config import config
+from datalumos.flows.subflows.assert_accuracy import run_accuracy_flow
 from datalumos.flows.subflows.assert_validity import run_column_validation
 from datalumos.flows.subflows.table_profiling import profile
 from datalumos.logging import get_logger, setup_logging
@@ -43,10 +44,10 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=True,
+            force_refresh=False,
         )
 
-        columns = db.get_column_names(table=table_name, schema=schema)[:1]
+        columns = db.get_column_names(table=table_name, schema=schema)
 
         await run_column_validation(
             table_profile_results=table_profile_results,
@@ -55,13 +56,13 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=True,
+            force_refresh=False,
         )
 
-        # await run_accuracy_flow(
-        #    table_profile_results=table_profile_results,
-    #     schema=schema,
-    #     table_name=table_name,
-    #     db=db,
-    #     force_refresh=True,
-    # )
+        await run_accuracy_flow(
+            table_profile_results=table_profile_results,
+            schema=schema,
+            table_name=table_name,
+            db=db,
+            force_refresh=False,
+        )

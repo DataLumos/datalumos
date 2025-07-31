@@ -18,9 +18,10 @@ For the given column and table context, provide:
    - Explain what this column represents in **clear, plain English**
    - Use terminology that **business and technical users** can both understand
 
-2. **Data Type**
-   - Choose one canonical type for validation:
-     `string`, `integer`, `float`, `date`, `boolean`, or `categorical`
+2. **Canonical Data Type**
+  - Choose the most logical data type: `string`, `integer`, `float`, `date`, `boolean`, or `categorical`
+  - Base your choice on the nature of the data, not just its current format
+
 
 3. **Technical Specification**
    List specific **validation constraints** and formatting rules the column must satisfy, including:

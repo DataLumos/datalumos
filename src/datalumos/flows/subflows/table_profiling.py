@@ -13,8 +13,6 @@ All analysis results are cached to enable efficient reuse across multiple workfl
 """
 
 import asyncio
-from pathlib import Path
-from typing import Final
 
 from agents import Runner
 from agents.mcp import MCPServerStdio
@@ -31,13 +29,12 @@ from datalumos.agents.agents.triage_agent import (
     TriageOutput,
 )
 from datalumos.agents.utils import run_agent_with_retries
+from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.logging import get_logger
 from datalumos.logging_utils import log_step_complete, log_step_start, log_summary
 from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
-_CACHE_DIR: Final = Path.home() / ".datalumos" / "analysis_cache"
-_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class TableAnalysisResults(BaseModel):
@@ -51,6 +48,10 @@ class TableAnalysisResults(BaseModel):
         description="Detailed analysis for each column"
     )
     column_triage: TriageOutput = Field(description="Column prioritization results")
+
+
+# Cache manager for analysis results
+_cache_manager = CacheManager("analysis_cache", "analysis", TableAnalysisResults)
 
 
 async def profile(
@@ -82,7 +83,7 @@ async def profile(
     logger.info(f"Starting analysis for {schema}.{table_name}")
 
     if not force_refresh:
-        cached_results = _load_cached_results(schema, table_name)
+        cached_results = _cache_manager.load_cached_results(schema, table_name)
         if cached_results:
             logger.info(f"Using cached results for {schema}.{table_name}")
             return cached_results
@@ -124,7 +125,7 @@ async def profile(
         column_triage=column_triage,
     )
 
-    _save_cached_results(schema, table_name, results)
+    _cache_manager.save_cached_results(schema, table_name, results)
 
     # Log profiling summary
     high_priority_cols = [
@@ -229,31 +230,3 @@ def get_high_priority_columns(results: TableAnalysisResults) -> list[tuple[str, 
         for c in results.column_triage.column_classifications
         if c.classification == ColumnImportance.HIGH
     ]
-
-
-def _cache_file_path(schema: str, table_name: str) -> Path:
-    """Get cache file path for table analysis results."""
-    return _CACHE_DIR / f"{schema}.{table_name}.analysis.json"
-
-
-def _load_cached_results(schema: str, table_name: str) -> TableAnalysisResults | None:
-    """Load cached analysis results if they exist."""
-    cache_file = _cache_file_path(schema, table_name)
-    if cache_file.exists():
-        try:
-            return TableAnalysisResults.model_validate_json(cache_file.read_text())
-        except Exception as e:
-            logger.warning(f"Failed to load cached results: {e}")
-    return None
-
-
-def _save_cached_results(
-    schema: str, table_name: str, results: TableAnalysisResults
-) -> None:
-    """Save analysis results to cache."""
-    cache_file = _cache_file_path(schema, table_name)
-    try:
-        cache_file.write_text(results.model_dump_json(indent=2))
-        logger.info(f"Results cached to {cache_file}")
-    except Exception as e:
-        logger.warning(f"Failed to cache results: {e}")
