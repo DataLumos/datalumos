@@ -46,11 +46,6 @@ class ValidationResults(BaseModel):
 
     violation_count: int = Field(description="Number of records violating this rule")
     severity: Severity = Field(description="Severity level of the violation")
-    sample_violations: list[SampleViolation] = Field(
-        default_factory=list,
-        description="Sample values showing the violation",
-        max_items=5,  # Limit samples to keep output manageable
-    )
 
 
 class RuleValidation(BaseModel):
