@@ -48,6 +48,7 @@ async def run(table_name: str, schema: str, config: AgentConfig):
         )
 
         columns = db.get_column_names(table=table_name, schema=schema)
+        logger.info(f"Columns: {columns}. Analyses skipped for all private columns")
 
         await run_column_validation(
             table_profile_results=table_profile_results,

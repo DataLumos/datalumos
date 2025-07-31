@@ -88,7 +88,11 @@ class PostgresDB:
             """
             )
             cur.execute(query)
-            columns = [Column(name=row[0], data_type=row[1]) for row in cur.fetchall()]
+            columns = [
+                Column(name=row[0], data_type=row[1])
+                for row in cur.fetchall()
+                if not row[0].startswith("_")
+            ]
         return columns
 
     def get_random_sample(self, table: str, schema: str, sample_size: int) -> list[dict]:

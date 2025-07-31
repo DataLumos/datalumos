@@ -22,17 +22,11 @@ For the column '{column_name}' in the context of '{table_context}', provide:
 
 ### 1. Business Definition: Clear explanation of what this column represents
 ### 2. Technical Specification:
-    2.1. Data type and format requirements
+    2.1. Format requirements
     2.2 Length constraints
     2.3 Pattern/regex if applicable
 
-### 3. Valid Values:
-    3.1 For categorical columns: list of allowed values
-    3.2 For numeric columns: valid ranges and intervals
-    3.3 For date columns: acceptable date ranges and formats
-
-### 4. Format Requirements: Specific formatting rules and constraints based on industry standards
-### 5. Authoritative Sources: Citation of reliable sources used in analysis
+### 3. Authoritative Sources: Citation of reliable sources used in analysis
 
 Example Analysis:
 
@@ -40,7 +34,7 @@ Example Analysis:
 
 table_context = "Customer demographics table for retail banking customers"
 column_name = "social_security_number"
-
+sample_values = "123-23-1321", "123-43-3243"
 
 ## Expected Output Example
 
