@@ -72,8 +72,8 @@ class ColumnValidation(BaseModel):
 
     column_name: str
     column_type: str = Field(description="Data type of the column")
-    rules_validated: list[RuleValidation] = Field(
-        default_factory=list, description="All validation rules applied to this column"
+    quality_checks: list[RuleValidation] = Field(
+        default_factory=list, description="All quality rules applied to this column"
     )
 
 

@@ -24,7 +24,7 @@ Accuracy belongs to a different pipeline.
 
 You will receive a JSON object with the following fields:
 - `column_name`: name of the column being validated
-- `data_type`: canonical data type - one of ["string", "integer", "float", "date", "boolean", "categorical"]
+- `data_type`: data type of the column.
 - `technical_specification`: a list of natural-language validation rules or constraints
 - `table_name`, `schema_name`, and `table_context`
 
@@ -68,7 +68,7 @@ python```
   "table_context": "U.S. customer delivery address table for ecommerce orders",
   "column_spec": {
     "column_name": "state",
-    "data_type": "categorical",
+    "data_type": "string",
     "business_definition": "Two-letter abbreviation of the U.S. state where the order will be delivered.",
     "technical_specification": [
       "Allowed values: Valid U.S. state codes such as ['AL', 'AK', 'AZ', ..., 'WY']",
@@ -87,7 +87,7 @@ python```
   "column_validation": {
     "column_name": "state",
     "column_type": "categorical",
-    "rules_validated": [
+    "quality_checks": [
       {
         "rule_id": "R001",
         "original_requirement": "Allowed values: Valid U.S. state codes such as ['AL', 'AK', 'AZ', ..., 'WY']",
