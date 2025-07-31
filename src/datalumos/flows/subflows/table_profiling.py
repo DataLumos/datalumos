@@ -31,7 +31,12 @@ from datalumos.agents.agents.triage_agent import (
 from datalumos.agents.utils import run_agent_with_retries
 from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.logging import get_logger
-from datalumos.logging_utils import log_step_complete, log_step_start, log_summary
+from datalumos.logging_utils import (
+    log_column_result,
+    log_step_complete,
+    log_step_start,
+    log_summary,
+)
 from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
@@ -157,6 +162,7 @@ async def _get_table_context(
         columns=db.get_column_names(schema=schema, table=table),
     )
     res = await Runner.run(explorer, f"Analyse {schema}.{table}")
+    log_column_result("Table profiling", "profile", res.final_output)
     return res.final_output
 
 
@@ -188,6 +194,7 @@ async def _analyze_columns(
             )
 
             logger.info(f"Column analysis complete: {column.name}")
+            log_column_result(column.name, "analysis", result.final_output)
             return result.final_output
 
     # Run all column analyses concurrently
