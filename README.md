@@ -145,6 +145,18 @@ Replace `<TABLE_NAME>` with the name of your database table and `<SCHEMA_NAME>` 
 datalumos-qa --table dtdc_curier --schema datalumos
 ```
 
+## Observability
+
+DataLumos supports [Langfuse](https://langfuse.com/) for observability and tracing of AI agent interactions. To enable it, set the following environment variables:
+
+```bash
+LANGFUSE_PUBLIC_KEY=your_public_key
+LANGFUSE_SECRET_KEY=your_secret_key
+LANGFUSE_HOST=https://cloud.langfuse.com  # or your self-hosted instance
+```
+
+Langfuse will automatically track OpenAI API calls, agent workflows, and provide detailed tracing for debugging and monitoring your data analysis runs.
+
 ## License
 
 MIT License - see LICENSE file for details.
