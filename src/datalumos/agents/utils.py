@@ -11,7 +11,8 @@ PROMPT_DIR = os.path.join(os.path.dirname(__file__), "prompts")
 def load_agent_prompt(agent_name: str) -> str:
     """
     Loads the prompt for a given agent based on its name.
-    The function looks for a Markdown file in the 'prompts' directory whose filename matches the agent name (case-insensitive, spaces replaced with underscores, and .md extension).
+    The function looks for a Markdown file in the 'prompts' directory whose filename matches
+    the agent name (case-insensitive, spaces replaced with underscores, and .md extension).
     Example: agent_name='Data Explorer' -> prompts/data_explorer.md
     """
     filename = agent_name.lower().replace(" ", "_") + ".md"
@@ -64,12 +65,16 @@ async def run_agent_with_retries(
             last_exception = e
             if i == attempts:
                 break
+            # Update question with the latest error message for the next attempt
+            question_with_error = f"{question}\nPrevious error: {last_error_message}"
+            question = question_with_error
             await asyncio.sleep(delay)
             delay *= backoff
     if raise_on_failure:
         raise last_exception
     else:
         logger.error(
-            f"Agent call failed after {attempts} attempts for question: '{question}'. Last error: {last_error_message}"
+            f"Agent call failed after {attempts} attempts for question: '{question}'. "
+            f"Last error: {last_error_message}"
         )
         return None
