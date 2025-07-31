@@ -7,6 +7,7 @@ import sys
 
 from datalumos.flows.flow import AgentConfig, run
 from datalumos.logging import setup_logging
+from datalumos.services.langfuse.setup import setup_langfuse
 
 
 def parse_arguments():
@@ -41,6 +42,8 @@ Examples:
 
 def main():
     """Main CLI entry point for QA analysis."""
+    langfuse = setup_langfuse()
+
     try:
         args = parse_arguments()
 
@@ -58,6 +61,7 @@ def main():
         print(validation_results)
 
         print("✅ Analysis completed successfully.")
+        langfuse.flush()
 
     except KeyboardInterrupt:
         print("\n⚠️  Analysis interrupted by user", file=sys.stderr)
