@@ -123,17 +123,17 @@ async def _validate_columns(
                 mcp_servers=[mcp_server],
             )
 
-            validation_prompt = (
-                f"Validate {column.name} column in the table {schema}.{table_name} "
-                f"\n Column name: {column.name}. "
-                f"\n Column description: {column_analysis.column_description}. "
-                f"\n Column data type: {column_analysis.data_type}. "
-                f"\n Column tech specs: {column_analysis.technical_specification}. "
+            validation_question = (
+                f"Validate '{column.name}' column in the table '{schema}.{table_name}' "
+                f"\n Column name: '{column.name}'. "
+                f"\n Column description: '{column_analysis.business_definition}'. "
+                f"\n Column data type: '{column_analysis.data_type}'. "
+                f"\n Column tech specs: '{column_analysis.technical_specification}'. "
                 f"\n You must execute the validation queries"
             )
 
             result = await run_agent_with_retries(
-                fn=Runner.run, agent=validator, question=validation_prompt
+                fn=Runner.run, agent=validator, question=validation_question
             )
 
             log_column_result(column.name, "validation", result.final_output)
