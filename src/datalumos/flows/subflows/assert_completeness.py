@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.logging import get_logger
-from datalumos.logging_utils import log_step_start
+from datalumos.logging_utils import log_column_result, log_step_start
 from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
@@ -77,6 +77,9 @@ async def run_completeness_flow(
         )
         for stat in stats
     ]
+
+    for fill_rate in fill_rates:
+        log_column_result(fill_rate.column_name, "completeness", fill_rate)
 
     results = CompletenessResults(column_fill_rates=fill_rates)
     _cache_manager.save_cached_results(schema, table_name, results)
