@@ -1,4 +1,5 @@
 """Centralized configuration for DataLumos with environment variable support."""
+
 import base64
 import os
 
@@ -25,6 +26,9 @@ class Config:
     # Logging
     LOGLEVEL: str = os.getenv("LOGLEVEL", "INFO")
 
+    # Report Generation
+    REPORT_OUTPUT_DIR: str = os.getenv("REPORT_OUTPUT_DIR", "datalumos")
+
     # Observability
     LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
     LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
@@ -36,10 +40,10 @@ class Config:
     OTEL_EXPORTER_OTLP_ENDPOINT = f"{LANGFUSE_HOST}/api/public/otel"
     OTEL_EXPORTER_OTLP_HEADERS = f"Authorization=Basic {LANGFUSE_AUTH}"
 
+
 # Global config instance
 config = Config()
 
 # Configure OpenTelemetry endpoint & headers
 os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = config.OTEL_EXPORTER_OTLP_ENDPOINT
 os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = config.OTEL_EXPORTER_OTLP_HEADERS
-

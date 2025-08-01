@@ -4,10 +4,12 @@ from agents import set_default_openai_key
 
 from datalumos.config import config
 from datalumos.flows.subflows.assert_accuracy import run_accuracy_flow
+from datalumos.flows.subflows.assert_completeness import run_completeness_flow
 from datalumos.flows.subflows.assert_validity import run_column_validation
 from datalumos.flows.subflows.table_profiling import profile
 from datalumos.logging import get_logger, setup_logging
 from datalumos.MCPs.postgres import postgres_mcp_server
+from datalumos.report_generator import generate_llm_ready_yaml_report
 from datalumos.services.postgres.config import DEFAULT_POSTGRES_CONFIG
 from datalumos.services.postgres.connection import PostgresDB
 
@@ -30,7 +32,9 @@ class AgentConfig:
         )
 
 
-async def run(table_name: str, schema: str, config: AgentConfig):
+async def run(
+    table_name: str, schema: str, config: AgentConfig, force_refresh: bool = False
+):
     """Main orchestration function - runs all three agents sequentially"""
 
     if config.openai_key:
@@ -44,26 +48,39 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=True,
+            force_refresh=force_refresh,
         )
 
         columns = db.get_column_names(table=table_name, schema=schema)
         logger.info(f"Columns: {columns}. Analyses skipped for all private columns")
 
-        await run_column_validation(
+        column_validation_results = await run_column_validation(
             table_profile_results=table_profile_results,
             columns=columns,
             schema=schema,
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=True,
         )
 
-        await run_accuracy_flow(
+        accuracy_results = await run_accuracy_flow(
             table_profile_results=table_profile_results,
             schema=schema,
             table_name=table_name,
             db=db,
-            force_refresh=True,
         )
+
+        completeness_results = await run_completeness_flow(
+            schema=schema,
+            table_name=table_name,
+            db=db,
+        )
+
+        report_path = generate_llm_ready_yaml_report(
+            table_name=table_name,
+            table_profile_result=table_profile_results,
+            validation_results=column_validation_results,
+            accuracy_results=accuracy_results,
+            completeness_results=completeness_results,
+        )
+        logger.info(f"Flow completed [green]✅. Report written to {report_path}")

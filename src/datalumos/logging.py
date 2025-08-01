@@ -2,12 +2,10 @@ import logging
 
 from rich.logging import RichHandler
 
-from datalumos.config import config
 
-
-def setup_logging():
+def setup_logging(loglevel: str = "INFO"):
     logging.basicConfig(
-        level=config.LOGLEVEL,
+        level=loglevel,
         format="%(message)s",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
