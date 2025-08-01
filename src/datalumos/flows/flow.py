@@ -4,6 +4,7 @@ from agents import set_default_openai_key
 
 from datalumos.config import config
 from datalumos.flows.subflows.assert_accuracy import run_accuracy_flow
+from datalumos.flows.subflows.assert_completeness import run_completeness_flow
 from datalumos.flows.subflows.assert_validity import run_column_validation
 from datalumos.flows.subflows.table_profiling import profile
 from datalumos.logging import get_logger, setup_logging
@@ -61,7 +62,14 @@ async def run(
             mcp_server=mcp_server,
         )
 
-        run_accuracy_flow(
+        await run_accuracy_flow(
+            table_profile_results=table_profile_results,
+            schema=schema,
+            table_name=table_name,
+            db=db,
+        )
+
+        await run_completeness_flow(
             table_profile_results=table_profile_results,
             schema=schema,
             table_name=table_name,
