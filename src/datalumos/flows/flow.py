@@ -76,9 +76,11 @@ async def run(
             db=db,
         )
 
-        generate_llm_ready_yaml_report(
+        report_path = generate_llm_ready_yaml_report(
+            table_name=table_name,
             table_profile_result=table_profile_results,
             validation_results=column_validation_results,
             accuracy_results=accuracy_results,
             completeness_results=completeness_results,
         )
+        logger.info(f"Flow completed [green]✅. Report written to {report_path}")
