@@ -52,7 +52,7 @@ async def run_column_validation(
     table_name: str,
     db: PostgresDB,
     mcp_server: MCPServerStdio,
-    force_refresh: bool = False,
+    force_refresh: bool = True,
 ) -> ValidationResults:
     """
     Run column validation based on table profiling results.
