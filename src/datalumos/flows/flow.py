@@ -9,6 +9,7 @@ from datalumos.flows.subflows.assert_validity import run_column_validation
 from datalumos.flows.subflows.table_profiling import profile
 from datalumos.logging import get_logger, setup_logging
 from datalumos.MCPs.postgres import postgres_mcp_server
+from datalumos.report_generator import generate_llm_ready_yaml_report
 from datalumos.services.postgres.config import DEFAULT_POSTGRES_CONFIG
 from datalumos.services.postgres.connection import PostgresDB
 
@@ -53,7 +54,7 @@ async def run(
         columns = db.get_column_names(table=table_name, schema=schema)
         logger.info(f"Columns: {columns}. Analyses skipped for all private columns")
 
-        await run_column_validation(
+        column_validation_results = await run_column_validation(
             table_profile_results=table_profile_results,
             columns=columns,
             schema=schema,
@@ -62,16 +63,22 @@ async def run(
             mcp_server=mcp_server,
         )
 
-        await run_accuracy_flow(
+        accuracy_results = await run_accuracy_flow(
             table_profile_results=table_profile_results,
             schema=schema,
             table_name=table_name,
             db=db,
         )
 
-        await run_completeness_flow(
-            table_profile_results=table_profile_results,
+        completeness_results = await run_completeness_flow(
             schema=schema,
             table_name=table_name,
             db=db,
+        )
+
+        generate_llm_ready_yaml_report(
+            table_profile_result=table_profile_results,
+            validation_results=column_validation_results,
+            accuracy_results=accuracy_results,
+            completeness_results=completeness_results,
         )
