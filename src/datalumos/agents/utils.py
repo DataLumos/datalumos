@@ -34,6 +34,7 @@ async def run_agent_with_retries(
     base_delay: float = 1.0,
     backoff: float = 2.0,
     raise_on_failure: bool = False,
+    max_turns: int = 30,
 ) -> Any:
     """
     Run *fn* with retry, skipping retry for cancellation / fatal errors.
@@ -56,7 +57,7 @@ async def run_agent_with_retries(
     last_exception = None
     for i in range(1, attempts + 1):
         try:
-            result = await fn(agent, question)
+            result = await fn(agent, question, max_turns=max_turns)
             return result
         except (asyncio.CancelledError, KeyboardInterrupt):  # no retry
             raise
