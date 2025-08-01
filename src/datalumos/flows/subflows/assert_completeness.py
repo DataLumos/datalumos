@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from datalumos.flows.subflows.cache_utils import CacheManager
 from datalumos.logging import get_logger
-from datalumos.logging_utils import log_column_result, log_step_start
+from datalumos.logging_utils import log_step_start
 from datalumos.services.postgres.connection import PostgresDB
 
 logger = get_logger(__name__)
@@ -38,11 +38,11 @@ class CompletenessResults(BaseModel):
 _cache_manager = CacheManager("completeness_cache", "completeness", CompletenessResults)
 
 
-async def assert_completeness(
+async def run_completeness_flow(
     schema: str,
     table_name: str,
     db: PostgresDB,
-    force_refresh: bool = False,
+    force_refresh: bool = True,
 ) -> CompletenessResults:
     """
     Calculate fill rates for all columns in a table.
@@ -82,5 +82,4 @@ async def assert_completeness(
     _cache_manager.save_cached_results(schema, table_name, results)
 
     logger.info(f"Calculated fill rates for {len(fill_rates)} columns")
-    log_column_result(results)
     return results
