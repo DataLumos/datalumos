@@ -23,7 +23,11 @@ def setup_langfuse():
         nest_asyncio.apply()
 
         # Configure logfire instrumentation.
-        logfire.configure(service_name='DataLumos flows', send_to_logfire=False)
+        logfire.configure(
+            service_name='DataLumos flows',
+            send_to_logfire=False,
+            console=False,
+        )
         # This method automatically patches the OpenAI Agents SDK to send logs via OTLP to Langfuse.
         logfire.instrument_openai_agents()
     except Exception as e:
