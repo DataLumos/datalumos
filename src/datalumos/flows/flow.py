@@ -30,7 +30,9 @@ class AgentConfig:
         )
 
 
-async def run(table_name: str, schema: str, config: AgentConfig):
+async def run(
+    table_name: str, schema: str, config: AgentConfig, force_refresh: bool = False
+):
     """Main orchestration function - runs all three agents sequentially"""
 
     if config.openai_key:
@@ -44,7 +46,7 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=True,
+            force_refresh=force_refresh,
         )
 
         columns = db.get_column_names(table=table_name, schema=schema)
@@ -57,13 +59,11 @@ async def run(table_name: str, schema: str, config: AgentConfig):
             table_name=table_name,
             db=db,
             mcp_server=mcp_server,
-            force_refresh=True,
         )
 
-        await run_accuracy_flow(
+        run_accuracy_flow(
             table_profile_results=table_profile_results,
             schema=schema,
             table_name=table_name,
             db=db,
-            force_refresh=True,
         )

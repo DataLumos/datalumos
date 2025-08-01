@@ -34,6 +34,16 @@ Examples:
     )
 
     parser.add_argument(
+        "--force-refresh",
+        dest="force_refresh",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Force refresh the table profiling. "
+        "By default, the table profiling step is cached.",
+    )
+
+    parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose logging"
     )
 
@@ -54,7 +64,14 @@ def main():
         print(f"📋 Table: {args.schema_name}.{args.table_name}")
 
         config = AgentConfig.from_env()
-        asyncio.run(run(schema=args.schema_name, table_name=args.table_name, config=config))
+        asyncio.run(
+            run(
+                schema=args.schema_name,
+                table_name=args.table_name,
+                config=config,
+                force_refresh=args.force_refresh,
+            )
+        )
         print("✅ Analysis completed successfully.")
         langfuse.flush()
 
