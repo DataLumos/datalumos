@@ -29,6 +29,7 @@ class Config:
     LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
     LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
     LANGFUSE_HOST: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    LOGFIRE_LOG_TO_CONSOLE: bool = os.getenv("LOGFIRE_LOG_TO_CONSOLE", "false").lower() == "true"
 
     LANGFUSE_AUTH = base64.b64encode(
         f"{LANGFUSE_PUBLIC_KEY}:{LANGFUSE_SECRET_KEY}".encode()
