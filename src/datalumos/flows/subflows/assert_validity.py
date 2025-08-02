@@ -108,36 +108,48 @@ async def _validate_columns(
 
     semaphore = asyncio.Semaphore(3)  # Limit concurrent validation
 
-    async def validate_single_column(column: Column) -> DataValidatorOutput:
-        """Validate a single column."""
+    async def validate_with_semaphore(column: Column) -> DataValidatorOutput:
+        """Wrapper to apply semaphore to validation."""
         async with semaphore:
-            # Get the corresponding column analysis
             column_analysis = analysis_map.get(column.name)
-            if not column_analysis:
-                logger.warning(
-                    f"No analysis found for column {column}, skipping validation"
-                )
-                return None
-
-            validator = DataValidatorAgent(
-                mcp_servers=[mcp_server],
+            return await _validate_single_column(
+                column, column_analysis, schema, table_name, mcp_server
             )
 
-            validation_prompt = (
-                f"Validate {column.name} column in the table {schema}.{table_name} "
-                f"Column analysis output: {column_analysis}"
-            )
-
-            result = await run_agent_with_retries(
-                fn=Runner.run, agent=validator, question=validation_prompt
-            )
-
-            log_column_result(column.name, "validation", result.final_output)
-            return result.final_output
-
-    validation_tasks = [validate_single_column(col) for col in columns]
+    validation_tasks = [validate_with_semaphore(col) for col in columns]
     validation_results = await asyncio.gather(*validation_tasks)
 
     # Filter out None results (columns without analysis). This could happen if the
     # run with retry exhausted retries.
     return [result for result in validation_results if result is not None]
+
+
+async def _validate_single_column(
+    column: Column,
+    column_analysis,
+    schema: str,
+    table_name: str,
+    mcp_server: MCPServerStdio,
+) -> DataValidatorOutput:
+    """Validate a single column using its analysis."""
+    if not column_analysis:
+        logger.warning(
+            f"No analysis found for column {column}, skipping validation"
+        )
+        return None
+
+    validator = DataValidatorAgent(
+        mcp_servers=[mcp_server],
+    )
+
+    validation_prompt = (
+        f"Validate {column.name} column in the table {schema}.{table_name} "
+        f"Column analysis output: {column_analysis}"
+    )
+
+    result = await run_agent_with_retries(
+        fn=Runner.run, agent=validator, question=validation_prompt
+    )
+
+    log_column_result(column.name, "validation", result.final_output)
+    return result.final_output
