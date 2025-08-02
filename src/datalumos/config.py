@@ -17,11 +17,15 @@ class Config:
 
     # PostgreSQL Configuration
     DL_DB_HOST: str = os.getenv("DL_DB_HOST", "localhost")
-    DL_DB_PORT: int = int(os.getenv("DL_DB_PORT", "5432"))
+    DL_DB_PORT: str = os.getenv(
+        "DL_DB_PORT", "5432"
+    )  # Keep as string to handle optional port
     DL_DB_NAME: str = os.getenv("DL_DB_NAME", "datalumos")
     DL_DB_USER: str = os.getenv("DL_DB_USER", "datalumos")
     DL_DB_PASSWORD: str = os.getenv("DL_DB_PASSWORD", "datalumos123")
     DL_DB_SCHEMA: str = os.getenv("DL_DB_SCHEMA", "public")
+    DL_DB_SSLMODE: str = os.getenv("DL_DB_SSLMODE", "")
+    DL_DB_CHANNELBINDING: str = os.getenv("DL_DB_CHANNELBINDING", "")
 
     # Logging
     LOGLEVEL: str = os.getenv("LOGLEVEL", "INFO")
@@ -33,6 +37,9 @@ class Config:
     LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
     LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
     LANGFUSE_HOST: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    LOGFIRE_LOG_TO_CONSOLE: bool = (
+        os.getenv("LOGFIRE_LOG_TO_CONSOLE", "false").lower() == "true"
+    )
 
     LANGFUSE_AUTH = base64.b64encode(
         f"{LANGFUSE_PUBLIC_KEY}:{LANGFUSE_SECRET_KEY}".encode()

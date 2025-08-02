@@ -72,7 +72,9 @@ async def run_accuracy_flow(
             logger.info(f"Using cached accuracy results for {schema}.{table_name}")
             return cached_results
 
-    results = await _run_all_accuracy_checks(table_profile_results, schema, table_name, db)
+    results = await _run_all_accuracy_checks(
+        table_profile_results, schema, table_name, db
+    )
 
     _cache_manager.save_cached_results(schema, table_name, results)
 
@@ -97,7 +99,9 @@ async def _run_all_accuracy_checks(
 
     return AccuracyResults(
         text_accuracy=[r for r in results if isinstance(r, TextAccuracyOutput)],
-        numerical_accuracy=[r for r in results if isinstance(r, NumericalAccuracyOutput)],
+        numerical_accuracy=[
+            r for r in results if isinstance(r, NumericalAccuracyOutput)
+        ],
         date_accuracy=[r for r in results if isinstance(r, DateAccuracyOutput)],
     )
 
@@ -113,7 +117,9 @@ async def _dispatch_column_check(
     column = analysis.column_name
 
     # Get column type
-    column_info = await asyncio.to_thread(db.get_column_type, column, table_name, schema)
+    column_info = await asyncio.to_thread(
+        db.get_column_type, column, table_name, schema
+    )
     column_type = column_info.lower()
 
     # Dispatch based on type
@@ -147,7 +153,9 @@ async def _check_text_accuracy(
     )
 
     if distinct_count < DISTINCT_VALUES_THRESHOLD:
-        values = await asyncio.to_thread(db.get_distinct_values, column, table_name, schema)
+        values = await asyncio.to_thread(
+            db.get_distinct_values, column, table_name, schema
+        )
     else:
         values = await asyncio.to_thread(
             db.get_sample_values, column, table_name, schema, limit=SAMPLE_SIZE

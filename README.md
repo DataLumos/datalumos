@@ -65,7 +65,7 @@ DataLumos doesn't just spot obvious problems. It runs through a systematic frame
 ### Prerequisites
 
 - Python 3.11 or higher
-- PostgreSQL (optional, for database sources)
+- PostgreSQL (local or serverless like Neon) - **Note: Must use unpooled connections** (avoid connection pooling for compatibility)
 
 ### Setup
 
@@ -124,10 +124,20 @@ from datalumos.agents import main
 
 ### Testing
 
-Run tests with pytest:
+DataLumos includes tests for various agent functionalities. Run them using:
+
 ```bash
-pytest
+# Run all tests
+uv run pytest tests
+
+# Run specific test files
+uv run pytest tests/flows/subflows/test_assert_validity.py
+
+# Run with verbose output
+uv run pytest tests -v
 ```
+
+**Note**: Some tests are integration tests that require a working PostgreSQL connection and may make actual API calls to test agent functionality.
 
 ## Running the Agentic System
 
