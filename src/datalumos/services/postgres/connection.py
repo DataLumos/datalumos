@@ -95,7 +95,9 @@ class PostgresDB:
             ]
         return columns
 
-    def get_random_sample(self, table: str, schema: str, sample_size: int) -> list[dict]:
+    def get_random_sample(
+        self, table: str, schema: str, sample_size: int
+    ) -> list[dict]:
         """Get a random sample of rows from a table. Include the column names in the
         result."""
         self.connect()
@@ -188,7 +190,9 @@ class PostgresDB:
                 non_null_count = cur.fetchone()[0]
 
                 # Calculate fill rate
-                fill_rate = (non_null_count / total_count * 100) if total_count > 0 else 0
+                fill_rate = (
+                    (non_null_count / total_count * 100) if total_count > 0 else 0
+                )
 
                 # Get distinct values count
                 distinct_query = sql.SQL(

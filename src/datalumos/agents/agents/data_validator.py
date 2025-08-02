@@ -38,7 +38,9 @@ class Severity(str, Enum):
 class SampleViolation(BaseModel):
     """Individual violation example"""
 
-    invalid_value: str = Field(description="The problematic value that violates the rule")
+    invalid_value: str = Field(
+        description="The problematic value that violates the rule"
+    )
 
 
 class ValidationResults(BaseModel):

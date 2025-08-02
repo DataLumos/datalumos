@@ -1,4 +1,5 @@
 """Centralized configuration for DataLumos with environment variable support."""
+
 import base64
 import os
 
@@ -16,7 +17,9 @@ class Config:
 
     # PostgreSQL Configuration
     DL_DB_HOST: str = os.getenv("DL_DB_HOST", "localhost")
-    DL_DB_PORT: str = os.getenv("DL_DB_PORT", "5432")  # Keep as string to handle optional port
+    DL_DB_PORT: str = os.getenv(
+        "DL_DB_PORT", "5432"
+    )  # Keep as string to handle optional port
     DL_DB_NAME: str = os.getenv("DL_DB_NAME", "datalumos")
     DL_DB_USER: str = os.getenv("DL_DB_USER", "datalumos")
     DL_DB_PASSWORD: str = os.getenv("DL_DB_PASSWORD", "datalumos123")
@@ -31,7 +34,9 @@ class Config:
     LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
     LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")
     LANGFUSE_HOST: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
-    LOGFIRE_LOG_TO_CONSOLE: bool = os.getenv("LOGFIRE_LOG_TO_CONSOLE", "false").lower() == "true"
+    LOGFIRE_LOG_TO_CONSOLE: bool = (
+        os.getenv("LOGFIRE_LOG_TO_CONSOLE", "false").lower() == "true"
+    )
 
     LANGFUSE_AUTH = base64.b64encode(
         f"{LANGFUSE_PUBLIC_KEY}:{LANGFUSE_SECRET_KEY}".encode()
@@ -39,10 +44,10 @@ class Config:
     OTEL_EXPORTER_OTLP_ENDPOINT = f"{LANGFUSE_HOST}/api/public/otel"
     OTEL_EXPORTER_OTLP_HEADERS = f"Authorization=Basic {LANGFUSE_AUTH}"
 
+
 # Global config instance
 config = Config()
 
 # Configure OpenTelemetry endpoint & headers
 os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = config.OTEL_EXPORTER_OTLP_ENDPOINT
 os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = config.OTEL_EXPORTER_OTLP_HEADERS
-

@@ -54,7 +54,9 @@ def main():
         print(f"📋 Table: {args.schema_name}.{args.table_name}")
 
         config = AgentConfig.from_env()
-        asyncio.run(run(schema=args.schema_name, table_name=args.table_name, config=config))
+        asyncio.run(
+            run(schema=args.schema_name, table_name=args.table_name, config=config)
+        )
         print("✅ Analysis completed successfully.")
         langfuse.flush()
 

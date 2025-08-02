@@ -45,7 +45,9 @@ class CacheManager(Generic[T]):
             try:
                 return self.result_type.model_validate_json(cache_file.read_text())
             except Exception as e:
-                logger.warning(f"Failed to load cached {self.cache_suffix} results: {e}")
+                logger.warning(
+                    f"Failed to load cached {self.cache_suffix} results: {e}"
+                )
         return None
 
     def save_cached_results(self, schema: str, table_name: str, results: T) -> None:

@@ -133,9 +133,7 @@ async def _validate_single_column(
 ) -> DataValidatorOutput:
     """Validate a single column using its analysis."""
     if not column_analysis:
-        logger.warning(
-            f"No analysis found for column {column}, skipping validation"
-        )
+        logger.warning(f"No analysis found for column {column}, skipping validation")
         return None
 
     validator = DataValidatorAgent(
