@@ -36,7 +36,7 @@ class ColumnAnalysisOutput(BaseModel):
     )
     data_type: str = Field(..., description="Data type of the column")
     canonical_data_type: Literal[
-        "string", "integer", "float", "date", "boolean", "categorical"
+        "string", "integer", "float", "date", "boolean", "decimal", "timestamp"
     ] = Field(..., description="Canonical data type for validation")
     technical_specification: list[str] = Field(
         description="Structured specification of what makes the column value valid"

@@ -222,6 +222,50 @@ class PostgresDB:
         self.connect()
         return self
 
+    def get_completeness_stats(self, table: str, schema: str) -> list[dict]:
+        """Get completeness statistics (fill rates) for all columns in a table.
+
+        Args:
+            table: Table name
+            schema: Schema name
+
+        Returns:
+            List of dictionaries with column_name, null_count, and fill_rate_percentage
+        """
+        self.connect()
+        with self.conn.cursor() as cur:
+            # Get total row count
+            count_query = sql.SQL(f"SELECT COUNT(*) FROM {schema}.{table}")
+            cur.execute(count_query)
+            total_rows = cur.fetchone()[0]
+
+            if total_rows == 0:
+                return []
+
+            columns = self.get_column_names(table, schema)
+            completeness_stats = []
+
+            for col in columns:
+                # Get null count
+                null_query = sql.SQL(
+                    f"SELECT COUNT(*) FROM {schema}.{table} WHERE {col.name} IS NULL"
+                )
+                cur.execute(null_query)
+                null_count = cur.fetchone()[0]
+
+                # Calculate fill rate
+                fill_rate = ((total_rows - null_count) / total_rows) * 100.0
+
+                completeness_stats.append(
+                    {
+                        "column_name": col.name,
+                        "null_count": null_count,
+                        "fill_rate_percentage": round(fill_rate, 2),
+                    }
+                )
+
+            return completeness_stats
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()

@@ -30,6 +30,9 @@ class Config:
     # Logging
     LOGLEVEL: str = os.getenv("LOGLEVEL", "INFO")
 
+    # Report Generation
+    REPORT_OUTPUT_DIR: str = os.getenv("REPORT_OUTPUT_DIR", "datalumos")
+
     # Observability
     LANGFUSE_PUBLIC_KEY: str = os.getenv("LANGFUSE_PUBLIC_KEY", "")
     LANGFUSE_SECRET_KEY: str = os.getenv("LANGFUSE_SECRET_KEY", "")

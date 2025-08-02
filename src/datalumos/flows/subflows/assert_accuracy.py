@@ -61,7 +61,7 @@ async def run_accuracy_flow(
     schema: str,
     table_name: str,
     db: PostgresDB,
-    force_refresh: bool = False,
+    force_refresh: bool = True,
 ) -> AccuracyResults:
     """Run accuracy validation with clean dispatcher logic."""
     log_step_start("Accuracy validation", f"{schema}.{table_name}")
